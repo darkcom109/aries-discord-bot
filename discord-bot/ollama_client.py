@@ -2,7 +2,7 @@ import asyncio
 import requests
 
 from configurations.system_prompt import system_prompt
-from configurations.tools import poll_tool
+from configurations.tools import poll_tool, reminder_tool
 
 async def ollama_response(history, prompt):
     messages = [
@@ -23,7 +23,7 @@ async def ollama_response(history, prompt):
             "model": "qwen3:8b",
             "messages": messages,
             "stream": False,
-            "tools": [poll_tool]
+            "tools": [poll_tool, reminder_tool]
         },
         timeout=240
     )

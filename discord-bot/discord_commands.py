@@ -1,8 +1,8 @@
 import discord
-from datetime import timedelta
 
 from database import load_messages, save_message, delete_messages
 from ollama_client import ollama_response
+from configurations.handlers import handle_create_poll, handle_create_reminder
 
 def register_commands(bot):
     @bot.event
@@ -35,61 +35,18 @@ def register_commands(bot):
 
         await save_message(guild_id, channel_id, user_id, "user", prompt)
 
+        # Manage different tool calls
         if tool_calls:
             function = tool_calls[0].get("function", {})
 
-            if function.get("name") != "create_poll":
+            if function.get("name") == "create_poll":
+                await handle_create_poll(interaction, function, guild_id, channel_id, user_id)
+            elif function.get("name") == "create_reminder":
+                await handle_create_reminder(interaction, function, guild_id, channel_id, user_id)
+            else:
                 await interaction.edit_original_response(
-                    content="I don't know how to perform that action"
+                    content="I don't know how to perform that action."
                 )
-                return
-
-            arguments = function.get("arguments", {})
-
-            if not isinstance(arguments, dict):
-                await interaction.edit_original_response(
-                    content="I couldn't understand the poll details"
-                )
-                return
-
-            question = arguments.get("question")
-            options = arguments.get("options")
-
-            if (
-                not isinstance(question, str)
-                or not question.strip()
-                or not isinstance(options, list)
-                or not 2 <= len(options) <= 10
-                or not all(isinstance(option, str) and option.strip() for option in options)
-            ):
-                await interaction.edit_original_response(
-                    content="I couldn't make a valid poll. Please provide a question and 2-10 choices."
-                )
-                return
-
-            question = question.strip()
-            options = [option.strip() for option in options]
-
-            poll = discord.Poll(
-                question=question,
-                duration=timedelta(hours=24)
-            )
-
-            for option in options:
-                poll.add_answer(text=option)
-
-            await interaction.edit_original_response(
-                content="Poll created:",
-                poll=poll
-            )
-
-            await save_message(
-                guild_id,
-                channel_id,
-                user_id,
-                "assistant",
-                f"Created a 24-hour poll: {question}"
-            )
 
             return
 

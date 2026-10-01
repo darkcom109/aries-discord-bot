@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, select, delete
+from sqlalchemy import String, Text, Integer, Boolean, select, delete
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -14,6 +14,17 @@ class Message(Base):
     user_id: Mapped[str] = mapped_column(String)
     role: Mapped[str] = mapped_column(String(10))
     content: Mapped[str] = mapped_column(Text)
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    guild_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    channel_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(Text)
+    due_at: Mapped[int] = mapped_column(Integer)
+    sent: Mapped[bool] = mapped_column(Boolean, default=False)
 
 engine = create_async_engine("sqlite+aiosqlite:///aries.db")
 
@@ -79,3 +90,49 @@ async def delete_messages(
 
         await session.execute(statement)
         await session.commit()
+
+async def save_reminder(
+    guild_id: str | None,
+    channel_id: str,
+    user_id: str,
+    content: str,
+    due_at: int,
+):
+    async with SessionFactory() as session:
+        reminder = Reminder(
+            guild_id=guild_id,
+            channel_id=channel_id,
+            user_id=user_id,
+            content=content,
+            due_at=due_at
+        )
+
+        session.add(reminder)
+        await session.commit()
+
+        return reminder.id
+    
+async def load_due_reminders(now: int):
+    async with SessionFactory() as session:
+        statement = (
+            select(Reminder)
+            .where(
+                Reminder.due_at <= now,
+                Reminder.sent.is_(False),
+            )
+            .order_by(Reminder.due_at)
+        )
+
+        result = await session.scalars(statement)
+        return list(result)
+
+async def mark_reminder_sent(reminder_id: int) -> bool:
+    async with SessionFactory() as session:
+        reminder = await session.get(Reminder, reminder_id)
+
+        if reminder is None:
+            return False
+
+        reminder.sent = True
+        await session.commit()
+        return True
