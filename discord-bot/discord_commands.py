@@ -13,6 +13,34 @@ def register_commands(bot):
     async def hello(interaction: discord.Interaction):
         await interaction.response.send_message(f"Hello from {bot.user}")
 
+    @bot.event
+    async def on_message(message):
+        if message.author.bot or bot.user is None:
+            return
+
+        if bot.user not in message.mentions:
+            return
+
+        prompt = (
+            message.content
+            .replace(f"<@{bot.user.id}", "")
+            .replace(f"<@!{bot.user.id}", "")
+            .strip()
+        )
+
+        if not prompt:
+            return
+
+        result = await ollama_response([], prompt)
+        reply = result["message"]
+
+        if reply.get("tool_calls"):
+            answer = "Use /ask for polls and reminders"
+        else:
+            answer = reply.get("content") or "I couldn't generate a reply"
+
+        await message.reply(answer, mention_author=False)
+
     @bot.commands.command(name="ask", description="Ask Aries a question")
     async def ask(interaction: discord.Interaction, prompt: str):
         # Acknowledge the command while Ollama is generating its reply
