@@ -136,3 +136,23 @@ async def mark_reminder_sent(reminder_id: int) -> bool:
         reminder.sent = True
         await session.commit()
         return True
+
+async def get_user_reminders(
+    guild_id: str | None,
+    channel_id: str,
+    user_id: str
+):
+    async with SessionFactory() as session:
+        statement = (
+            select(Reminder)
+            .where(
+                Reminder.guild_id == guild_id,
+                Reminder.channel_id == channel_id,
+                Reminder.user_id == user_id,
+                Reminder.sent.is_(False)
+            )
+            .order_by(Reminder.due_at)
+        )
+
+        result = await session.scalars(statement)
+        return list(result)
