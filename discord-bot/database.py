@@ -56,7 +56,6 @@ async def save_message(
 async def load_messages(
     guild_id: str | None,
     channel_id: str,
-    user_id: str,
     limit: int = 10,
 ):
     async with SessionFactory() as session:
@@ -65,7 +64,6 @@ async def load_messages(
             .where(
                 Message.guild_id == guild_id,
                 Message.channel_id == channel_id,
-                Message.user_id == user_id,
             )
             .order_by(Message.id.desc())
             .limit(limit)

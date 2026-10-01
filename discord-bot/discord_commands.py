@@ -31,13 +31,26 @@ def register_commands(bot):
         if not prompt:
             return
 
-        result = await ollama_response([], prompt)
+        guild_id = str(message.guild.id) if message.guild else None
+        channel_id = str(message.channel.id)
+        user_id = str(message.author.id)
+
+        async with message.channel.typing():
+            history = await load_messages(guild_id, channel_id)
+            result = await ollama_response(history, prompt)
+
         reply = result["message"]
 
         if reply.get("tool_calls"):
             answer = "Use /ask for polls and reminders"
         else:
             answer = reply.get("content") or "I couldn't generate a reply"
+
+        await save_message(guild_id, channel_id, user_id, "user", prompt)
+        await save_message(guild_id, channel_id, user_id, "assistant", answer)
+
+        if len(answer) > 2000:
+            answer = answer[:1997] + "..."
 
         await message.reply(answer, mention_author=False)
 
@@ -54,7 +67,7 @@ def register_commands(bot):
         channel_id = str(interaction.channel_id)
         user_id = str(interaction.user.id)
 
-        history = await load_messages(guild_id, channel_id, user_id)
+        history = await load_messages(guild_id, channel_id)
 
         data = await ollama_response(history, prompt)
 
@@ -174,6 +187,51 @@ def register_commands(bot):
             response,
             ephemeral=True
         )
+
+    @bot.commands.command(
+        name="summarise",
+        description="Summarise the server's saved Aries conversation in this channel"
+    )
+    async def summarise(interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        guild_id = (
+            str(interaction.guild_id)
+            if interaction.guild_id is not None
+            else None
+        )
+        channel_id = str(interaction.channel_id)
+        user_id = str(interaction.user.id)
+
+        history = await load_messages(
+            guild_id,
+            channel_id,
+            limit=20,
+        )
+
+        if not history:
+            await interaction.edit_original_response(
+                content="There's no saved Aries conversation to summarise here"
+            )
+            return
+
+        data = await ollama_response(
+            history,
+            "Summarise the conversation so far. Include important facts, "
+            "decisions, and unresolved questions. Be concise and don't invent "
+            "details. Do not use tools."
+        )
+
+        model_message = data["message"]
+
+        if model_message.get("tool_calls"):
+            summary = "I couldn't summarise the conversation"
+        else:
+            summary = model_message.get("content", "").strip()
+            if not summary:
+                summary = "I couldn't produce a summary"
+
+        await interaction.edit_original_response(content=summary[:2000])
 
 
 
