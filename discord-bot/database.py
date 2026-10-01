@@ -156,3 +156,23 @@ async def get_user_reminders(
 
         result = await session.scalars(statement)
         return list(result)
+
+async def delete_user_reminder(
+    reminder_id: int,
+    guild_id: str | None,
+    channel_id: str,
+    user_id: str,
+) -> bool:
+    async with SessionFactory() as session:
+        statement = delete(Reminder).where(
+            Reminder.id == reminder_id,
+            Reminder.guild_id == guild_id,
+            Reminder.channel_id == channel_id,
+            Reminder.user_id == user_id,
+            Reminder.sent.is_(False),
+        )
+
+        result = await session.execute(statement)
+        await session.commit()
+
+        return True
