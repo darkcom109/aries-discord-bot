@@ -4,8 +4,9 @@ import discord
 import asyncio
 import requests
 from dotenv import load_dotenv
+from pathlib import Path
 
-from database import create_tables, load_messages, save_message
+from database import create_tables, load_messages, save_message, delete_messages
 
 load_dotenv()
 
@@ -49,12 +50,18 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
     history = await load_messages(guild_id, channel_id, user_id)
 
-    system_prompt = (
-        "You are Aries, a friendly assistant in a Discord server. "
-        "Give clear, concise answers. Use the conversation history for context. "
-        "If you don't know something, say so instead of making it up. "
-        "You can only see the messages included in this request."
-    )
+    guide_path = Path(__file__).with_name("server_guide.md")
+    server_guide = guide_path.read_text(encoding="utf-8")
+
+    system_prompt = f"""
+        You are Aries, a friendly assistant in a Discord server.
+        Give clear, concise answers. Use the conversation history for context. 
+        If you don't know something, say so instead of making it up.
+        You can only see the messages included in this request.
+
+        Server Guide:
+        {server_guide}
+    """
 
     messages = [
         {"role": "system", "content": system_prompt}
@@ -86,5 +93,25 @@ async def ask(interaction: discord.Interaction, prompt: str):
     await save_message(guild_id, channel_id, user_id, "assistant", answer)
 
     await interaction.edit_original_response(content=answer[:2000])
+
+@bot.commands.command(
+    name="forget",
+    description="Delete your saved Aries history from this channel",
+)
+async def forget(interaction: discord.Interaction):
+    guild_id = (
+        str(interaction.guild_id)
+        if interaction.guild_id is not None
+        else None
+    )
+    channel_id = str(interaction.channel_id)
+    user_id = str(interaction.user.id)
+
+    await delete_messages(guild_id, channel_id, user_id)
+
+    await interaction.response.send_message(
+        "I've cleared your saved conversation history from this channel",
+        ephemeral=True
+    )
 
 bot.run(token=token)
