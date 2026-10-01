@@ -1,4 +1,5 @@
 import discord
+from datetime import timedelta
 
 from database import load_messages, save_message, delete_messages
 from ollama_client import ollama_response
@@ -29,9 +30,71 @@ def register_commands(bot):
 
         data = await ollama_response(history, prompt)
 
-        answer = data["message"]["content"]
+        message = data["message"]
+        tool_calls = message.get("tool_calls", [])
 
         await save_message(guild_id, channel_id, user_id, "user", prompt)
+
+        if tool_calls:
+            function = tool_calls[0].get("function", {})
+
+            if function.get("name") != "create_poll":
+                await interaction.edit_original_response(
+                    content="I don't know how to perform that action"
+                )
+                return
+
+            arguments = function.get("arguments", {})
+
+            if not isinstance(arguments, dict):
+                await interaction.edit_original_response(
+                    content="I couldn't understand the poll details"
+                )
+                return
+
+            question = arguments.get("question")
+            options = arguments.get("options")
+
+            if (
+                not isinstance(question, str)
+                or not question.strip()
+                or not isinstance(options, list)
+                or not 2 <= len(options) <= 10
+                or not all(isinstance(option, str) and option.strip() for option in options)
+            ):
+                await interaction.edit_original_response(
+                    content="I couldn't make a valid poll. Please provide a question and 2-10 choices."
+                )
+                return
+
+            question = question.strip()
+            options = [option.strip() for option in options]
+
+            poll = discord.Poll(
+                question=question,
+                duration=timedelta(hours=24)
+            )
+
+            for option in options:
+                poll.add_answer(text=option)
+
+            await interaction.edit_original_response(
+                content="Poll created:",
+                poll=poll
+            )
+
+            await save_message(
+                guild_id,
+                channel_id,
+                user_id,
+                "assistant",
+                f"Created a 24-hour poll: {question}"
+            )
+
+            return
+
+        answer = message.get("content", "")
+
         await save_message(guild_id, channel_id, user_id, "assistant", answer)
 
         await interaction.edit_original_response(content=answer[:2000])

@@ -1,7 +1,7 @@
 import asyncio
 import requests
 
-from configurations import system_prompt
+from configurations.system_prompt import system_prompt
 from configurations.tools import poll_tool
 
 async def ollama_response(history, prompt):
