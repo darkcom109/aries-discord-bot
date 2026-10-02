@@ -201,7 +201,6 @@ def register_commands(bot):
             else None
         )
         channel_id = str(interaction.channel_id)
-        user_id = str(interaction.user.id)
 
         history = await load_messages(
             guild_id,
