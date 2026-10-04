@@ -2,7 +2,7 @@ import discord
 
 from database import load_messages, save_message, delete_messages, get_user_reminders, delete_user_reminder
 from ollama_client import ollama_response
-from configurations.handlers import handle_create_poll, handle_create_reminder, handle_web_search
+from configurations.handlers import handlers
 
 def register_commands(bot):
     @bot.event
@@ -79,13 +79,10 @@ def register_commands(bot):
         # Manage different tool calls
         if tool_calls:
             function = tool_calls[0].get("function", {})
+            function_name = function.get("name")
 
-            if function.get("name") == "create_poll":
-                await handle_create_poll(interaction, function, guild_id, channel_id, user_id)
-            elif function.get("name") == "create_reminder":
-                await handle_create_reminder(interaction, function, guild_id, channel_id, user_id)
-            elif function.get("name") == "web_search":
-                await handle_web_search(interaction, function, guild_id, channel_id, user_id)
+            if function_name:
+                await handlers[function_name](interaction, function, guild_id, channel_id, user_id)
             else:
                 await interaction.edit_original_response(
                     content="I don't know how to perform that action."

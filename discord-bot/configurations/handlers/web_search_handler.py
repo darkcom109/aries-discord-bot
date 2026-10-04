@@ -48,7 +48,7 @@ async def handle_web_search(
                     "Answer the question and cite the URLs."
                 )
 
-    response = response["message"]["content"]
+    response = response["message"]["content"][:2000]
 
     await save_message(guild_id, channel_id, user_id, "assistant", response)
 
