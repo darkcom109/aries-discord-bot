@@ -1,12 +1,12 @@
 import asyncio
 import requests
 
-from configurations.system_prompt import system_prompt
+from configurations.system_prompt import get_system_prompt
 from configurations.tools import poll_tool, reminder_tool, web_search_tool
 
 async def ollama_response(history, prompt):
     messages = [
-        {"role": "system", "content": system_prompt}
+        {"role": "system", "content": get_system_prompt()}
     ]
 
     messages.extend(
