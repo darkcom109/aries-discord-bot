@@ -43,6 +43,8 @@ async def handle_web_search(
         for result in results
     )
 
+    print(results_text)
+
     response = await web_search_response(
                     f"Question: {query}\n\nSearch results:\n{results_text}\n\n"
                     "Answer the question and cite the URLs."

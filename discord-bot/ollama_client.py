@@ -20,7 +20,7 @@ async def ollama_response(history, prompt):
         requests.post,
         "http://localhost:11434/api/chat",
         json={
-            "model": "qwen3:8b",
+            "model": "gemma4:12b",
             "messages": messages,
             "stream": False,
             "tools": [poll_tool, reminder_tool, web_search_tool]
