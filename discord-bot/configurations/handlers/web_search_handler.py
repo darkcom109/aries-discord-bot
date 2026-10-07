@@ -1,6 +1,6 @@
 import asyncio
 import requests
-from web_search_client import web_search_response
+from clients.web_search_client import web_search_response
 from database import save_message
 
 async def web_search(query: str) -> list[dict[str, str]]:

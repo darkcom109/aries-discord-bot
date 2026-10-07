@@ -1,8 +1,9 @@
 import discord
 
-from file_reader import extract_text
 from io import BytesIO
-from generate_notes_client import generate_notes
+
+from clients.generate_notes_client import generate_notes
+from configurations.helpers.file_reader import extract_text
 
 def register_notes(bot):
     @bot.commands.command(

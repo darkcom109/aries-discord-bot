@@ -1,7 +1,7 @@
 import discord
 
 from database import load_messages
-from ollama_client import ollama_response
+from clients.ollama_client import ollama_response
 
 def register_summarise(bot):
     @bot.commands.command(

@@ -1,7 +1,7 @@
 import discord
 
 from database import load_messages, save_message
-from ollama_client import ollama_response
+from clients.ollama_client import ollama_response
 from configurations.handlers import handlers
 
 def register_ask(bot):

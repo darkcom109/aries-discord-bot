@@ -1,5 +1,5 @@
 from database import load_messages, save_message
-from ollama_client import ollama_response
+from clients.ollama_client import ollama_response
 from commands import (
     register_ask,
     register_cancel_reminder,
