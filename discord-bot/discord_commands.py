@@ -29,6 +29,26 @@ def register_commands(bot):
             .strip()
         )
 
+        image = next(
+            (
+                attachment
+                for attachment in message.attachments
+                if attachment.content_type
+                and attachment.content_type.startswith("image/")
+            ),
+            None,
+        )
+
+        if image is not None and image.size > 8 * 1024 * 1024:
+            await message.reply(
+                "Please use an image smaller than 8 MB.",
+                mention_author=False
+            )
+            return
+
+        if not prompt and image is not None:
+            prompt = "Describe this image."
+
         if not prompt:
             return
 
@@ -37,8 +57,9 @@ def register_commands(bot):
         user_id = str(message.author.id)
 
         async with message.channel.typing():
+            image_data = await image.read() if image is not None else None
             history = await load_messages(guild_id, channel_id)
-            result = await ollama_response(history, prompt)
+            result = await ollama_response(history, prompt, image_data)
 
         reply = result["message"]
 

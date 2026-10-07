@@ -6,7 +6,25 @@ from configurations.handlers import handlers
 
 def register_ask(bot):
     @bot.commands.command(name="ask", description="Ask Aries a question")
-    async def ask(interaction: discord.Interaction, prompt: str):
+    async def ask(interaction: discord.Interaction, prompt: str, image: discord.Attachment | None = None):
+
+        image_data = None
+
+        if image is not None:
+            if not image.content_type or not image.content_type.startswith("image/"):
+                await interaction.edit_original_response(
+                    content="Please attach an image file"
+                )
+                return
+
+            if image.size > 8 * 1024 * 1024:
+                await interaction.edit_original_response(
+                    content="Please use an image smaller than 8MB."
+                )
+
+            image_data = await image.read()
+            
+
         # Acknowledge the command while Ollama is generating its reply
         await interaction.response.defer(thinking=True)
 
@@ -20,7 +38,7 @@ def register_ask(bot):
 
         history = await load_messages(guild_id, channel_id)
 
-        data = await ollama_response(history, prompt)
+        data = await ollama_response(history, prompt, image_data)
 
         message = data["message"]
         tool_calls = message.get("tool_calls", [])

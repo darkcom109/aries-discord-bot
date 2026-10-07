@@ -1,10 +1,11 @@
 import asyncio
 import requests
+import base64
 
 from configurations.system_prompt import get_system_prompt
 from configurations.tools import poll_tool, reminder_tool, web_search_tool
 
-async def ollama_response(history, prompt):
+async def ollama_response(history, prompt, image_data: bytes | None = None):
     messages = [
         {"role": "system", "content": get_system_prompt()}
     ]
@@ -14,7 +15,17 @@ async def ollama_response(history, prompt):
         for message in history
     )
 
-    messages.append({"role": "user", "content": prompt})
+    user_message = {
+        "role": "user",
+        "content": prompt
+    }
+
+    if image_data is not None:
+        user_message["images"] = [
+            base64.b64encode(image_data).decode("ascii")
+        ]
+
+    messages.append(user_message)
 
     response = await asyncio.to_thread(
         requests.post,
