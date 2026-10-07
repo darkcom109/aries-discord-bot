@@ -7,6 +7,7 @@ from commands import (
     register_hello,
     register_reminders,
     register_summarise,
+    register_notes
 )
 
 def register_commands(bot):
@@ -82,3 +83,4 @@ def register_commands(bot):
     register_reminders(bot)
     register_cancel_reminder(bot)
     register_summarise(bot)
+    register_notes(bot)
