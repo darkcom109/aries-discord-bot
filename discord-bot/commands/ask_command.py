@@ -24,7 +24,6 @@ def register_ask(bot):
 
             image_data = await image.read()
             
-
         # Acknowledge the command while Ollama is generating its reply
         await interaction.response.defer(thinking=True)
 
