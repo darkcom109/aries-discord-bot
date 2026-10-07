@@ -1,7 +1,7 @@
 use_default_settings: true
 
 server:
-  secret_key: "0d6326f432858c5ac7ab70127030c993b313621d633e654194a91ad9d3f64fba"
+  secret_key: "ultrasecretkey"
 
 search:
   formats:
