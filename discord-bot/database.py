@@ -77,13 +77,11 @@ async def load_messages(
 async def delete_messages(
     guild_id: str | None,
     channel_id: str,
-    user_id: str,
 ):
     async with SessionFactory() as session:
         statement = delete(Message).where(
             Message.guild_id == guild_id,
             Message.channel_id == channel_id,
-            Message.user_id == user_id
         )
 
         await session.execute(statement)
