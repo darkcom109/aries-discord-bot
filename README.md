@@ -6,7 +6,7 @@ Aries is a self-hosted Discord chatbot powered by a local Ollama model. It keeps
 
 - Python 3.12 recommended
 - A Discord application and bot token
-- [Ollama](https://ollama.com/download/linux) with the `gemma4:12b` model
+- [Ollama](https://ollama.com/download/linux) with the `gemma4:e4b` model
 - SearXNG on `localhost:8088` for web search (optional)
 
 ## Run on Linux
@@ -28,7 +28,7 @@ DISCORD_TOKEN=your_bot_token_here
 Keep `.env` private; it is ignored by Git. Install Ollama, then download Aries's model:
 
 ```bash
-ollama pull gemma4:12b
+ollama pull gemma4:e4b
 ```
 
 Start Aries from the `discord-bot` directory so its SQLite database stays in the expected location:

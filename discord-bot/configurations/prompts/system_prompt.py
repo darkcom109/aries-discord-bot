@@ -1,7 +1,7 @@
 from datetime import date
 from pathlib import Path
 
-guide_path = Path(__file__).with_name("server_guide.md")
+guide_path = Path(__file__).parent.parent / "server_guide.md"
 server_guide = guide_path.read_text(encoding="utf-8")
 
 def get_system_prompt():

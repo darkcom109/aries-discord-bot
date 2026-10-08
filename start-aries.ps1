@@ -28,9 +28,9 @@ try {
     throw "Ollama is not responding at http://127.0.0.1:11434. Start Ollama, then retry."
 }
 
-ollama show gemma4:12b *> $null
+ollama show gemma4:e4b *> $null
 if ($LASTEXITCODE -ne 0) {
-    throw "The gemma4:12b model is missing. Download it with: ollama pull gemma4:12b"
+    throw "The gemma4:e4b model is missing. Download it with: ollama pull gemma4:e4b"
 }
 
 if (-not (Test-Path $VenvPython)) {

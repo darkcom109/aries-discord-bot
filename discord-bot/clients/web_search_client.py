@@ -22,9 +22,10 @@ async def web_search_response(prompt):
         requests.post,
         "http://localhost:11434/api/chat",
         json={
-            "model": "gemma4:12b",
+            "model": "gemma4:e4b",
             "messages": messages,
             "stream": False,
+            "think": False,
         },
         timeout=240
     )
