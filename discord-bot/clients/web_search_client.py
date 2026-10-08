@@ -25,6 +25,7 @@ async def web_search_response(prompt):
             "model": "gemma4:e4b",
             "messages": messages,
             "stream": False,
+            "think": False,
         },
         timeout=240
     )

@@ -30,7 +30,8 @@ async def generate_notes(document_text: str, filename: str) -> str:
         json={
             "model": "gemma4:e4b",
             "messages": messages,
-            "stream": False
+            "stream": False,
+            "think": False
         },
         timeout=240
     )

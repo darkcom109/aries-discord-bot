@@ -33,6 +33,7 @@ async def summarise_response(history, prompt, image_data: bytes | None = None):
             "model": "gemma4:e4b",
             "messages": messages,
             "stream": False,
+            "think": False,
             "options": {
                 "num_predict": 256
             }
