@@ -63,3 +63,5 @@ async def ollama_response(history, prompt, image_data: bytes | None = None):
         f"({tokens_per_second(data.get('eval_count', 0), data.get('eval_duration', 0)):.1f} tok/s) | "
         f"thinking={len(thinking)} chars"
     )
+
+    return data

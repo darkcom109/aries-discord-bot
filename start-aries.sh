@@ -38,4 +38,4 @@ cd "$ROOT_DIR"
 docker compose up -d searxng
 
 cd "$ROOT_DIR/discord-bot"
-exec "$VENV_PYTHON" main.py
+exec "$VENV_PYTHON" -u main.py
