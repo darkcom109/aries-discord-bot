@@ -1,7 +1,7 @@
 import discord
 
 from database import load_messages
-from clients.ollama_client import ollama_response
+from clients.summarise_client import summarise_response
 
 def register_summarise(bot):
     @bot.commands.command(
@@ -30,11 +30,9 @@ def register_summarise(bot):
             )
             return
 
-        data = await ollama_response(
+        data = await summarise_response(
             history,
-            "Summarise the conversation so far. Include important facts, "
-            "decisions, and unresolved questions. Be concise and don't invent "
-            "details. Do not use tools."
+            "Summarise the conversation so far."
         )
 
         model_message = data["message"]

@@ -2,12 +2,11 @@ import asyncio
 import requests
 import base64
 
-from configurations.prompts.system_prompt import get_system_prompt
-from configurations.tools import poll_tool, reminder_tool, web_search_tool
+from configurations.prompts.summarise_prompt import get_summarise_prompt
 
-async def ollama_response(history, prompt, image_data: bytes | None = None):
+async def summarise_response(history, prompt, image_data: bytes | None = None):
     messages = [
-        {"role": "system", "content": get_system_prompt()}
+        {"role": "system", "content": get_summarise_prompt()}
     ]
 
     messages.extend(
@@ -34,7 +33,6 @@ async def ollama_response(history, prompt, image_data: bytes | None = None):
             "model": "gemma4:e4b",
             "messages": messages,
             "stream": False,
-            "tools": [poll_tool, reminder_tool, web_search_tool],
             "options": {
                 "num_predict": 256
             }

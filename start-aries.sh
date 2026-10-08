@@ -24,8 +24,8 @@ if ! curl -fsS http://127.0.0.1:11434/api/tags >/dev/null; then
     exit 1
 fi
 
-if ! ollama show gemma4:12b >/dev/null 2>&1; then
-    echo "The gemma4:12b model is missing. Download it with: ollama pull gemma4:12b" >&2
+if ! ollama show gemma4:e4b >/dev/null 2>&1; then
+    echo "The gemma4:e4b model is missing. Download it with: ollama pull gemma4:e4b" >&2
     exit 1
 fi
 

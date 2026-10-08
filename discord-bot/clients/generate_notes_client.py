@@ -28,7 +28,7 @@ async def generate_notes(document_text: str, filename: str) -> str:
         requests.post,
         "http://localhost:11434/api/chat",
         json={
-            "model": "gemma4:12b",
+            "model": "gemma4:e4b",
             "messages": messages,
             "stream": False
         },
