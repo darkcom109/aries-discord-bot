@@ -26,7 +26,7 @@ class MyBot(discord.Client):
         self.check_reminders.start()
         await self.commands.sync()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=5)
     async def check_reminders(self):
         reminders = await load_due_reminders(int(time.time()))
 

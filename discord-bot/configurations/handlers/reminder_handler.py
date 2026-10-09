@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 
 from database import save_reminder, save_message
 
@@ -18,22 +18,25 @@ async def handle_create_reminder(
         return
 
     content = arguments.get("content")
-    delay_minutes = arguments.get("delay_minutes")
+    reminder_time = arguments.get("time")
 
     if (
         not isinstance(content, str)
         or not content.strip()
-        or not isinstance(delay_minutes, int)
-        or isinstance(delay_minutes, bool)
-        or not 1 <= delay_minutes <= 43200
+        or not isinstance(reminder_time, str)
+        or isinstance(reminder_time, bool)
+        or datetime.now().strftime("%Y-%m-%dT%H:%M") >= reminder_time
     ):
         await interaction.edit_original_response(
-            content="Please provide a reminder and a delay between 1 minute and 30 days."
+            content="Please provide a valid reminder"
         )
         return
 
     content = content.strip()
-    due_at = int(time.time() + delay_minutes * 60)
+
+    target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M")
+
+    due_at = int(target.timestamp())
 
     reminder_id = await save_reminder(
         guild_id,
@@ -43,9 +46,8 @@ async def handle_create_reminder(
         due_at
     )
 
-    unit = "minute" if delay_minutes == 1 else "minutes"
     confirmation = (
-        f"I'll remind you in {delay_minutes} {unit}: "
+        f"I'll remind you at {reminder_time}: "
         f"{content} (reminder #{reminder_id})"
     )
 

@@ -4,25 +4,23 @@ reminder_tool = {
         "name": "create_reminder",
         "description": (
             "Create a one-time reminder only when the user has specified both "
-            "what to remember and a relative delay, such as 'in 30 minutes'. "
+            "what to remember and a time or minute, such as 'in 30 minutes'. "
             "If either detail is missing, ask a follow-up question and do not "
             "call this tool; never use that question as the reminder content. "
-            "If the user gives a clock time, date, or unclear delay, ask for "
-            "clarification instead of guessing."
+            "If you are unsure of the time or minute ask a clarifying question."
         ),
         "parameters": {
             "type": "object",
-            "required": ["content", "delay_minutes"],
+            "required": ["content", "time"],
             "properties": {
                 "content": {
                     "type": "string",
                     "description": "The specific thing the user wants to be reminded about; never a clarification question"
                 },
-                "delay_minutes": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 43200,
-                    "description": "A clear relative delay in minutes from now"
+                "time": {
+                    "type": "string",
+                    "description": "Scheduled date and time in YYYY-MM-DDTHH:MM format, "
+                                   "using Europe/London. Example: 2026-10-10T16:00"
                 }
             }
         }
