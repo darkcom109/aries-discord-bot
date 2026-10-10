@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 
 import discord
 from discord.ext import tasks
@@ -8,12 +9,19 @@ from dotenv import load_dotenv
 from database import create_tables, load_due_reminders, mark_reminder_sent
 from discord_commands import register_commands
 
-load_dotenv()
+bot_directory = Path(__file__).resolve().parent
+project_directory = bot_directory.parent
+load_dotenv(bot_directory / ".env")
+load_dotenv(project_directory / ".env")
 
 token = os.getenv("DISCORD_TOKEN")
+ollama_api_key = os.getenv("OLLAMA_API_KEY")
 
 if not token:
     raise RuntimeError("DISCORD_TOKEN is missing")
+
+if not ollama_api_key:
+    raise RuntimeError("OLLAMA_API_KEY is missing")
 
 class MyBot(discord.Client):
     def __init__(self):

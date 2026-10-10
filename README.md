@@ -1,12 +1,12 @@
 # Aries Discord Bot
 
-Aries is a self-hosted Discord chatbot powered by a local Ollama model. It keeps conversation memory in SQLite and can create polls, reminders, and study notes from PDF or PowerPoint files.
+Aries is a self-hosted Discord chatbot powered by Ollama's Gemma 4 31B cloud model through Ollama's API. It keeps conversation memory in SQLite and can create polls, reminders, search the web, analyse images, and generate study notes from PDF or PowerPoint files.
 
 ## What you need
 
 - Python 3.12 recommended
 - A Discord application and bot token
-- [Ollama](https://ollama.com/download/linux) with the `gemma4:e4b` model
+- An [Ollama API key](https://ollama.com/settings/keys) with access to cloud models
 - SearXNG on `localhost:8088` for web search (optional)
 
 ## Run on Linux
@@ -19,17 +19,17 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Create a `.env` file in the repository root and add your Discord bot token:
+Copy `.env.example` to `.env` in the repository root, then fill in your Discord token, Ollama API key, and SearXNG secret:
 
 ```env
-DISCORD_TOKEN=your_bot_token_here
+DISCORD_TOKEN=your_discord_bot_token
+OLLAMA_API_KEY=your_ollama_api_key
+SEARXNG_SECRET=replace_with_a_random_secret
 ```
 
-Keep `.env` private; it is ignored by Git. Install Ollama, then download Aries's model:
+Keep `.env` private; it is ignored by Git. Aries calls `https://ollama.com/api/chat` directly using the `gemma4:31b` cloud model, so Ollama does not need to be installed or running on the bot host. Cloud usage is subject to your Ollama account's credits and limits.
 
-```bash
-ollama pull gemma4:e4b
-```
+You can keep `DISCORD_TOKEN` and `OLLAMA_API_KEY` in `discord-bot/.env` instead. The root `.env` must still contain `SEARXNG_SECRET` for Docker Compose.
 
 Start Aries from the `discord-bot` directory so its SQLite database stays in the expected location:
 
@@ -38,7 +38,7 @@ cd discord-bot
 python main.py
 ```
 
-This runs Aries in the foreground for testing. Set up `systemd` auto-start after confirming the bot works on the mini PC.
+This runs Aries in the foreground for testing. Conversation context and attached images are sent to Ollama's cloud API for inference. Set up `systemd` auto-start after confirming the bot works on the mini PC.
 
 Invite the bot using the `bot` and `applications.commands` scopes, with permissions to view and send messages, create polls, and attach files.
 

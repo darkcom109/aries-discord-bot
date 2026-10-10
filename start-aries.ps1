@@ -6,7 +6,7 @@ $Requirements = Join-Path $Root "requirements.txt"
 $BotDirectory = Join-Path $Root "discord-bot"
 
 if (-not (Test-Path (Join-Path $Root ".env"))) {
-    throw "Missing .env in the repo root. Add DISCORD_TOKEN and SEARXNG_SECRET there."
+    throw "Missing the repo-root .env required by SearXNG. Set SEARXNG_SECRET there; bot credentials can be in discord-bot/.env."
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
@@ -16,21 +16,6 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 docker compose version *> $null
 if ($LASTEXITCODE -ne 0) {
     throw "Docker Compose is unavailable. Check that Docker Desktop is running."
-}
-
-if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
-    throw "Ollama was not found. Install and start Ollama, then retry."
-}
-
-try {
-    $null = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 5
-} catch {
-    throw "Ollama is not responding at http://127.0.0.1:11434. Start Ollama, then retry."
-}
-
-ollama show gemma4:e4b *> $null
-if ($LASTEXITCODE -ne 0) {
-    throw "The gemma4:e4b model is missing. Download it with: ollama pull gemma4:e4b"
 }
 
 if (-not (Test-Path $VenvPython)) {

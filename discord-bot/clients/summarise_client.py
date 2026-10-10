@@ -3,6 +3,7 @@ import requests
 import base64
 
 from configurations.prompts.summarise_prompt import get_summarise_prompt
+from configurations.ollama_config import OLLAMA_API_URL, OLLAMA_MODEL, get_ollama_headers
 
 async def summarise_response(history, prompt, image_data: bytes | None = None):
     messages = [
@@ -28,9 +29,10 @@ async def summarise_response(history, prompt, image_data: bytes | None = None):
 
     response = await asyncio.to_thread(
         requests.post,
-        "http://localhost:11434/api/chat",
+        OLLAMA_API_URL,
+        headers=get_ollama_headers(),
         json={
-            "model": "gemma4:e4b",
+            "model": OLLAMA_MODEL,
             "messages": messages,
             "stream": False,
             "think": False,
