@@ -1,5 +1,6 @@
 import asyncio
 import requests
+import trafilatura
 from clients.web_search_client import web_search_response
 from database import save_message
 
@@ -23,6 +24,25 @@ async def web_search(query: str) -> list[dict[str, str]]:
         for result in data.get("results", [])[:5]
     ]
 
+def fetch_page_text(url):
+    response = requests.get(
+        url,
+        headers={"User-Agent": "AriesDiscordBot/1.0"},
+        timeout=10
+    )
+    response.raise_for_status()
+
+    if "html" not in response.headers:
+        return ""
+
+    text = trafilatura.extract(
+        response.text,
+        include_comments=False,
+        include_tables=False
+    )
+
+    return (text or "")[:3000]
+
 async def handle_web_search(
     interaction,
     function,
@@ -43,7 +63,15 @@ async def handle_web_search(
         for result in results
     )
 
-    print(results_text)
+    page_texts = await asyncio.gather(
+        *(
+            asyncio.to_thread(fetch_page_text, result["url"])
+            for result in results[:3]
+        )
+    )
+
+    for result, page_text in zip(results[:3], page_texts):
+        result["page_text"] = page_text or result["content"]
 
     response = await web_search_response(
                     f"Question: {query}\n\nSearch results:\n{results_text}\n\n"
