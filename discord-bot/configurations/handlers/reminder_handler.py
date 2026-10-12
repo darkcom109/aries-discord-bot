@@ -19,6 +19,7 @@ async def handle_create_reminder(
 
     content = arguments.get("content")
     reminder_time = arguments.get("time")
+    repeat = arguments.get("repeat")
 
     if (
         not isinstance(content, str)
@@ -26,6 +27,7 @@ async def handle_create_reminder(
         or not isinstance(reminder_time, str)
         or isinstance(reminder_time, bool)
         or datetime.now().strftime("%Y-%m-%dT%H:%M") >= reminder_time
+        or repeat not in ["none", "daily", "weekly"]
     ):
         await interaction.edit_original_response(
             content="Please provide a valid reminder"
@@ -43,7 +45,8 @@ async def handle_create_reminder(
         channel_id,
         user_id,
         content,
-        due_at
+        due_at,
+        repeat,
     )
 
     confirmation = (

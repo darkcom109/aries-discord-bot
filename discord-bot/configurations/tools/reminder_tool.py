@@ -21,6 +21,11 @@ reminder_tool = {
                     "type": "string",
                     "description": "Scheduled date and time in YYYY-MM-DDTHH:MM format, "
                                    "using Europe/London. Example: 2026-10-10T16:00"
+                },
+                "repeat": {
+                    "type": "string",
+                    "enum": ["none", "daily", "weekly"],
+                    "description": "How often to repeat, use none for one-time"
                 }
             }
         }

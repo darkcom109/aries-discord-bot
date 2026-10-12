@@ -1,12 +1,13 @@
 import os
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
 
-from database import create_tables, load_due_reminders, mark_reminder_sent
+from database import create_tables, load_due_reminders, mark_reminder_sent, update_due_at
 from discord_commands import register_commands
 
 bot_directory = Path(__file__).resolve().parent
@@ -52,7 +53,23 @@ class MyBot(discord.Client):
                 print(f"Couldn't send reminder {reminder.id}: {error}")
                 continue
 
-            await mark_reminder_sent(reminder.id)
+            repeat = reminder.repeat
+
+            if repeat == "none":
+                await mark_reminder_sent(reminder.id)
+            else:
+                next_time = datetime.fromtimestamp(
+                    reminder.due_at
+                )
+
+                if repeat == "daily":
+                    next_time += timedelta(days=1)
+                else:
+                    next_time += timedelta(days=7)
+
+                next_due_at = int(next_time.timestamp())
+
+                await update_due_at(reminder.id, next_due_at)
 
     @check_reminders.before_loop
     async def before_check_reminders(self):
