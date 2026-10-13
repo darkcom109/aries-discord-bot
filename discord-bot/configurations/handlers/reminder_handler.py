@@ -17,41 +17,51 @@ async def handle_create_reminder(
         )
         return
 
-    content = arguments.get("content")
-    reminder_time = arguments.get("time")
-    repeat = arguments.get("repeat")
+    reminders = arguments.get("reminders", [])
 
-    if (
-        not isinstance(content, str)
-        or not content.strip()
-        or not isinstance(reminder_time, str)
-        or isinstance(reminder_time, bool)
-        or datetime.now().strftime("%Y-%m-%dT%H:%M") >= reminder_time
-        or repeat not in ["none", "daily", "weekly"]
-    ):
+    if reminders == []:
         await interaction.edit_original_response(
             content="Please provide a valid reminder"
         )
         return
 
-    content = content.strip()
+    for reminder in reminders:
 
-    target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M")
+        content = reminder.get("content")
+        reminder_time = reminder.get("time")
+        repeat = reminder.get("repeat", "none")
 
-    due_at = int(target.timestamp())
+        if (
+            not isinstance(content, str)
+            or not content.strip()
+            or not isinstance(reminder_time, str)
+            or isinstance(reminder_time, bool)
+            or datetime.now().strftime("%Y-%m-%dT%H:%M") >= reminder_time
+            or repeat not in ["none", "daily", "weekly"]
+        ):
+            await interaction.edit_original_response(
+                content="Please provide a valid reminder"
+            )
+            return
 
-    reminder_id = await save_reminder(
-        guild_id,
-        channel_id,
-        user_id,
-        content,
-        due_at,
-        repeat,
-    )
+        content = content.strip()
+
+        target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M")
+
+        due_at = int(target.timestamp())
+
+        reminder_id = await save_reminder(
+            guild_id,
+            channel_id,
+            user_id,
+            content,
+            due_at,
+            repeat,
+        )
 
     confirmation = (
-        f"I'll remind you at {reminder_time}: "
-        f"{content} (reminder #{reminder_id})"
+        f"I have scheduled: {reminder.get("content")}"
+        for reminder in reminders
     )
 
     await interaction.edit_original_response(
