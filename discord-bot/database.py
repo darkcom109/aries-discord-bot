@@ -24,6 +24,7 @@ class Reminder(Base):
     user_id: Mapped[str] = mapped_column(String)
     content: Mapped[str] = mapped_column(Text)
     due_at: Mapped[int] = mapped_column(Integer)
+    repeat: Mapped[str] = mapped_column(String)
     sent: Mapped[bool] = mapped_column(Boolean, default=False)
 
 engine = create_async_engine("sqlite+aiosqlite:///aries.db")
@@ -93,6 +94,7 @@ async def save_reminder(
     user_id: str,
     content: str,
     due_at: int,
+    repeat: str,
 ):
     async with SessionFactory() as session:
         reminder = Reminder(
@@ -100,7 +102,8 @@ async def save_reminder(
             channel_id=channel_id,
             user_id=user_id,
             content=content,
-            due_at=due_at
+            due_at=due_at,
+            repeat=repeat
         )
 
         session.add(reminder)
@@ -172,3 +175,26 @@ async def delete_user_reminder(
         await session.commit()
 
         return True
+
+async def update_due_at(
+    reminder_id: int,
+    new_due_at: str,
+):
+    async with SessionFactory() as session:
+        statement = (
+            select(Reminder)
+            .where(
+                Reminder.id == reminder_id, 
+            )
+        )
+
+        result = await session.execute(statement)
+        reminder = result.scalar_one_or_none()
+
+        reminder.due_at = new_due_at
+
+        await session.commit()
+
+        return True
+
+        
