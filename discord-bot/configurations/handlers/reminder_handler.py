@@ -50,7 +50,7 @@ async def handle_create_reminder(
 
         due_at = int(target.timestamp())
 
-        reminder_id = await save_reminder(
+        await save_reminder(
             guild_id,
             channel_id,
             user_id,
@@ -59,8 +59,8 @@ async def handle_create_reminder(
             repeat,
         )
 
-    confirmation = (
-        f"I have scheduled: {reminder.get("content")}"
+    confirmation = "\n".join(
+        f"I have scheduled: {reminder['content']}"
         for reminder in reminders
     )
 
