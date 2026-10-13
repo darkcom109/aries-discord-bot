@@ -36,7 +36,7 @@ async def handle_create_reminder(
             or not content.strip()
             or not isinstance(reminder_time, str)
             or isinstance(reminder_time, bool)
-            or datetime.now().strftime("%Y-%m-%dT%H:%M") >= reminder_time
+            or datetime.now().strftime("%Y-%m-%dT%H:%M:%S") >= reminder_time
             or repeat not in ["none", "daily", "weekly"]
         ):
             await interaction.edit_original_response(
@@ -46,7 +46,7 @@ async def handle_create_reminder(
 
         content = content.strip()
 
-        target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M")
+        target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M:%S")
 
         due_at = int(target.timestamp())
 

@@ -25,7 +25,7 @@ reminder_tool = {
                             "content": {"type": "string"},
                             "time": {
                                 "type": "string",
-                                "description": "YYYY-MM-DDTHH:MM, using Europe/London"
+                                "description": "YYYY-MM-DDTHH:MM:SS, using Europe/London"
                             },
                             "repeat": {
                                 "type": "string",
