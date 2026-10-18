@@ -18,8 +18,8 @@ from database import (
 )
 from configurations.helpers.reminder_helper import next_reminder_due_at
 from configurations.helpers.response_helper import shorten_text
-from discord_commands import register_commands
-from reminder_view import ReminderView
+from commands import register_commands
+from views import ReminderView
 
 bot_directory = Path(__file__).resolve().parent
 project_directory = bot_directory.parent

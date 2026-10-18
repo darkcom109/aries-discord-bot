@@ -1,7 +1,7 @@
 import discord
 
-from library_database import get_user_library
-from library_view import LibraryView
+from database import get_user_library
+from views import LibraryView
 
 def register_library(bot):
     @bot.commands.command(

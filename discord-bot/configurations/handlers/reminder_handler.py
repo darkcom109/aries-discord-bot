@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from database import save_reminder, save_message
+from configurations.helpers.reminder_helper import format_reminder_content
 
 async def handle_create_reminder(
     interaction,
@@ -25,6 +26,8 @@ async def handle_create_reminder(
         )
         return
 
+    scheduled_contents = []
+
     for reminder in reminders:
 
         content = reminder.get("content")
@@ -44,7 +47,7 @@ async def handle_create_reminder(
             )
             return
 
-        content = content.strip()
+        content = format_reminder_content(content)
 
         target = datetime.strptime(reminder_time, "%Y-%m-%dT%H:%M:%S")
 
@@ -58,10 +61,11 @@ async def handle_create_reminder(
             due_at,
             repeat,
         )
+        scheduled_contents.append(content)
 
     confirmation = "\n".join(
-        f"I have scheduled: {reminder['content']}"
-        for reminder in reminders
+        f"I have scheduled: {content}"
+        for content in scheduled_contents
     )
 
     await interaction.edit_original_response(

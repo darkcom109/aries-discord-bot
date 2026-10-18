@@ -2,7 +2,8 @@ import time
 
 from sqlalchemy import delete, func, select
 
-from database import SavedItem, SessionFactory
+from . import connection
+from .models import SavedItem
 
 async def save_library_item(
     guild_id: str | None,
@@ -12,7 +13,7 @@ async def save_library_item(
     content: str,
     source_url: str | None = None,
 ) -> int:
-    async with SessionFactory() as session:
+    async with connection.SessionFactory() as session:
         item = None
 
         if source_url is not None:
@@ -44,7 +45,7 @@ async def get_user_library(
     user_id: str,
     query: str = "",
 ):
-    async with SessionFactory() as session:
+    async with connection.SessionFactory() as session:
         statement = select(SavedItem).where(
             SavedItem.guild_id == guild_id,
             SavedItem.user_id == user_id,
@@ -65,7 +66,7 @@ async def get_user_library_item(
     guild_id: str | None,
     user_id: str,
 ):
-    async with SessionFactory() as session:
+    async with connection.SessionFactory() as session:
         return await session.scalar(
             select(SavedItem).where(
                 SavedItem.id == item_id,
@@ -79,7 +80,7 @@ async def delete_user_library_item(
     guild_id: str | None,
     user_id: str,
 ) -> bool:
-    async with SessionFactory() as session:
+    async with connection.SessionFactory() as session:
         result = await session.execute(
             delete(SavedItem)
             .where(

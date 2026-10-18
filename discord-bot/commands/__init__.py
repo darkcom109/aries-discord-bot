@@ -8,3 +8,4 @@ from .notes_command import register_notes
 from .save_command import register_save
 from .library_command import register_library
 from .context_command import register_context
+from .discord_commands import register_commands
