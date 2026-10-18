@@ -33,7 +33,7 @@ def extract_text(filename: str, file_bytes: bytes) -> str:
 
             if text_parts:
                 sections.append(
-                    f"Slide {slide_number:\n}" + "\n".join(text_parts)
+                    f"Slide {slide_number}:\n" + "\n".join(text_parts)
                 )
 
         return "\n\n".join(sections)

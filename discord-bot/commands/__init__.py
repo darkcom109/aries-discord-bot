@@ -5,3 +5,6 @@ from .hello_command import register_hello
 from .reminders_command import register_reminders
 from .summarise_command import register_summarise
 from .notes_command import register_notes
+from .save_command import register_save
+from .library_command import register_library
+from .context_command import register_context

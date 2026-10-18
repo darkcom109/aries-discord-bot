@@ -3,6 +3,7 @@ import requests
 import trafilatura
 from clients.web_search_client import web_search_response
 from database import save_message
+from configurations.helpers.response_helper import send_answer
 
 async def web_search(query: str) -> list[dict[str, str]]:
     response = await asyncio.to_thread(
@@ -82,10 +83,8 @@ async def handle_web_search(
                     "Answer the question and cite the URLs."
                 )
 
-    response = response["message"]["content"][:2000]
+    response = response["message"].get("content") or "I couldn't produce an answer from those results."
 
     await save_message(guild_id, channel_id, user_id, "assistant", response)
 
-    await interaction.edit_original_response(
-        content=response
-    )
+    await send_answer(interaction, response)

@@ -1,4 +1,6 @@
-from sqlalchemy import String, Text, Integer, Boolean, select, delete
+import time
+
+from sqlalchemy import String, Text, Integer, Boolean, select, delete, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -26,6 +28,30 @@ class Reminder(Base):
     due_at: Mapped[int] = mapped_column(Integer)
     repeat: Mapped[str] = mapped_column(String)
     sent: Mapped[bool] = mapped_column(Boolean, default=False)
+
+class ReminderDelivery(Base):
+    __tablename__ = "reminder_deliveries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    reminder_id: Mapped[int] = mapped_column(Integer)
+    guild_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    channel_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(Text)
+    message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False)
+
+class SavedItem(Base):
+    __tablename__ = "saved_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    guild_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    channel_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String, index=True)
+    title: Mapped[str] = mapped_column(String(100))
+    content: Mapped[str] = mapped_column(Text)
+    source_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[int] = mapped_column(Integer)
 
 engine = create_async_engine("sqlite+aiosqlite:///aries.db")
 
@@ -169,16 +195,17 @@ async def delete_user_reminder(
             Reminder.channel_id == channel_id,
             Reminder.user_id == user_id,
             Reminder.sent.is_(False),
-        )
+        ).returning(Reminder.id)
 
         result = await session.execute(statement)
+        deleted_id = result.scalar_one_or_none()
         await session.commit()
 
-        return True
+        return deleted_id is not None
 
 async def update_due_at(
     reminder_id: int,
-    new_due_at: str,
+    new_due_at: int,
 ):
     async with SessionFactory() as session:
         statement = (
@@ -191,10 +218,91 @@ async def update_due_at(
         result = await session.execute(statement)
         reminder = result.scalar_one_or_none()
 
+        if reminder is None:
+            return False
+
         reminder.due_at = new_due_at
 
         await session.commit()
 
         return True
 
-        
+async def save_reminder_delivery(reminder: Reminder) -> int:
+    async with SessionFactory() as session:
+        delivery = ReminderDelivery(
+            reminder_id=reminder.id,
+            guild_id=reminder.guild_id,
+            channel_id=reminder.channel_id,
+            user_id=reminder.user_id,
+            content=reminder.content,
+        )
+        session.add(delivery)
+        await session.commit()
+        return delivery.id
+
+async def set_reminder_delivery_message(delivery_id: int, message_id: str):
+    async with SessionFactory() as session:
+        await session.execute(
+            update(ReminderDelivery)
+            .where(ReminderDelivery.id == delivery_id)
+            .values(message_id=message_id)
+        )
+        await session.commit()
+
+async def delete_reminder_delivery(delivery_id: int):
+    async with SessionFactory() as session:
+        await session.execute(
+            delete(ReminderDelivery).where(ReminderDelivery.id == delivery_id)
+        )
+        await session.commit()
+
+async def get_reminder_delivery(delivery_id: int):
+    async with SessionFactory() as session:
+        return await session.get(ReminderDelivery, delivery_id)
+
+async def load_reminder_deliveries():
+    async with SessionFactory() as session:
+        result = await session.scalars(
+            select(ReminderDelivery).where(
+                ReminderDelivery.resolved.is_(False),
+                ReminderDelivery.message_id.is_not(None),
+            )
+        )
+        return list(result)
+
+async def resolve_reminder_delivery(
+    delivery_id: int,
+    user_id: str,
+    snooze_seconds: int | None = None,
+) -> bool:
+    if snooze_seconds is not None and not 60 <= snooze_seconds <= 7 * 86400:
+        raise ValueError("Choose a snooze time between 1 minute and 7 days.")
+
+    async with SessionFactory() as session:
+        result = await session.execute(
+            update(ReminderDelivery)
+            .where(
+                ReminderDelivery.id == delivery_id,
+                ReminderDelivery.user_id == user_id,
+                ReminderDelivery.resolved.is_(False),
+            )
+            .values(resolved=True)
+            .returning(ReminderDelivery)
+        )
+        delivery = result.scalar_one_or_none()
+
+        if delivery is None:
+            return False
+
+        if snooze_seconds is not None:
+            session.add(Reminder(
+                guild_id=delivery.guild_id,
+                channel_id=delivery.channel_id,
+                user_id=delivery.user_id,
+                content=delivery.content,
+                due_at=int(time.time()) + snooze_seconds,
+                repeat="none",
+            ))
+
+        await session.commit()
+        return True

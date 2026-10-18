@@ -16,7 +16,7 @@ async def ollama_response(history, prompt, image_data: bytes | None = None):
         for message in history
     )
 
-    user_message = {
+    user_message: dict[str, str | list[str]] = {
         "role": "user",
         "content": prompt
     }
@@ -28,20 +28,28 @@ async def ollama_response(history, prompt, image_data: bytes | None = None):
 
     messages.append(user_message)
 
+    return await ollama_request(
+        messages,
+        tools=[poll_tool, reminder_tool, web_search_tool],
+    )
+
+async def ollama_request(messages, tools=None, max_tokens: int = 256):
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": messages,
+        "stream": False,
+        "think": False,
+        "options": {"num_predict": max_tokens},
+    }
+
+    if tools:
+        payload["tools"] = tools
+
     response = await asyncio.to_thread(
         requests.post,
         OLLAMA_API_URL,
         headers=get_ollama_headers(),
-        json={
-            "model": OLLAMA_MODEL,
-            "messages": messages,
-            "stream": False,
-            "tools": [poll_tool, reminder_tool, web_search_tool],
-            "think": False,
-            "options": {
-                "num_predict": 256
-            }
-        },
+        json=payload,
         timeout=240
     )
 

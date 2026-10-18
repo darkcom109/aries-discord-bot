@@ -3,10 +3,12 @@ import discord
 from database import load_messages, save_message
 from clients.ollama_client import ollama_response
 from configurations.handlers import handlers
+from configurations.helpers.response_helper import send_answer
 
 def register_ask(bot):
     @bot.commands.command(name="ask", description="Ask Aries a question")
     async def ask(interaction: discord.Interaction, prompt: str, image: discord.Attachment | None = None):
+        await interaction.response.defer(thinking=True)
 
         image_data = None
 
@@ -21,12 +23,10 @@ def register_ask(bot):
                 await interaction.edit_original_response(
                     content="Please use an image smaller than 8MB."
                 )
+                return
 
             image_data = await image.read()
             
-        # Acknowledge the command while Ollama is generating its reply
-        await interaction.response.defer(thinking=True)
-
         guild_id = (
             str(interaction.guild_id)
             if interaction.guild_id is not None
@@ -58,8 +58,8 @@ def register_ask(bot):
 
             return
 
-        answer = message.get("content", "")
+        answer = message.get("content") or "I couldn't generate a reply. Please try again."
 
         await save_message(guild_id, channel_id, user_id, "assistant", answer)
 
-        await interaction.edit_original_response(content=answer[:2000])
+        await send_answer(interaction, answer)
