@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from database import create_tables, load_due_reminders, mark_reminder_sent, update_due_at
 from discord_commands import register_commands
+from reminder_view import ReminderView
 
 bot_directory = Path(__file__).resolve().parent
 project_directory = bot_directory.parent
@@ -47,6 +48,12 @@ class MyBot(discord.Client):
                     f"<@{reminder.user_id}> Reminder: {reminder.content}",
                     allowed_mentions=discord.AllowedMentions(
                         users=[discord.Object(id=int(reminder.user_id))]
+                    ),
+                    view=ReminderView(
+                        reminder.guild_id,
+                        reminder.channel_id,
+                        reminder.user_id,
+                        reminder.content
                     )
                 )
             except discord.HTTPException as error:
@@ -67,7 +74,7 @@ class MyBot(discord.Client):
                 else:
                     next_time += timedelta(days=7)
 
-                next_due_at = int(next_time.timestamp())
+                next_due_at = str(next_time.timestamp())
 
                 await update_due_at(reminder.id, next_due_at)
 
