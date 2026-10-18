@@ -4,8 +4,8 @@ import logging
 import discord
 
 from configurations.helpers.response_helper import shorten_text
-from library_database import delete_user_library_item, get_user_library, get_user_library_item
-from source_question_modal import SourceQuestionModal
+from database import delete_user_library_item, get_user_library, get_user_library_item
+from modals import SourceQuestionModal
 
 class LibraryView(discord.ui.View):
     def __init__(

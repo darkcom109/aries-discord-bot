@@ -1,6 +1,10 @@
 import time
 from datetime import datetime, timedelta
 
+def format_reminder_content(content: str) -> str:
+    content = " ".join(content.split())
+    return content[:1].upper() + content[1:]
+
 def next_reminder_due_at(due_at: int, repeat: str, now: int | None = None):
     if repeat == "none":
         return None

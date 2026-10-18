@@ -5,18 +5,16 @@ import discord
 from database import load_messages, save_message
 from clients.ollama_client import ollama_response
 from configurations.helpers.response_helper import answer_parts
-from commands import (
-    register_ask,
-    register_cancel_reminder,
-    register_forget,
-    register_hello,
-    register_reminders,
-    register_summarise,
-    register_notes,
-    register_save,
-    register_library,
-    register_context,
-)
+from .ask_command import register_ask
+from .cancel_reminder_command import register_cancel_reminder
+from .forget_command import register_forget
+from .hello_command import register_hello
+from .reminders_command import register_reminders
+from .summarise_command import register_summarise
+from .notes_command import register_notes
+from .save_command import register_save
+from .library_command import register_library
+from .context_command import register_context
 
 def register_commands(bot):
     @bot.event

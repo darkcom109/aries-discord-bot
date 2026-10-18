@@ -63,4 +63,15 @@ Conversation memory, reminders, and saved library entries are stored in `discord
 
 The database is currently tracked by Git. Before saving private content, use `git rm --cached discord-bot/aries.db` to stop tracking it while keeping your local data. The ignore rules then keep it out of future commits; they do not remove older committed copies.
 
+## Project layout
+
+`discord-bot/main.py` starts Aries. Related code is grouped into packages, with imports exposed through each package's `__init__.py`:
+
+- `commands/`: slash commands, message actions, and command/event registration.
+- `clients/`: requests to Ollama and other services.
+- `configurations/`: settings, prompts, tool definitions, handlers, and helpers.
+- `database/`: models, connection setup, and queries for messages, reminders, and saved items.
+- `views/`: message buttons and dropdown menus.
+- `modals/`: popup forms for questions and custom snooze times.
+
 Run the offline checks from the repository root with `python -m unittest discover -s tests -p 'test_*.py'`. They use isolated temporary databases and mocked AI requests.

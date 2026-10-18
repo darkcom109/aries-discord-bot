@@ -16,16 +16,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import database
-import library_database
+from database import connection, library_database
 from clients.source_client import select_source_text, source_response
-from commands.context_command import MessageQuestionModal
+from modals import MessageQuestionModal, SnoozeModal
 from configurations.helpers.file_reader import extract_text
 from configurations.helpers.reminder_helper import next_reminder_due_at
 from configurations.helpers.response_helper import answer_parts, shorten_text
-from discord_commands import register_commands
-from library_view import LibraryView
+from commands import register_commands
+from views import LibraryView, ReminderView
 from main import MyBot
-from reminder_view import ReminderView, SnoozeModal
 
 class StorageTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -37,9 +36,8 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(self.engine.dispose)
         factory = async_sessionmaker(self.engine, expire_on_commit=False)
         self.patches = [
-            patch.object(database, "engine", self.engine),
-            patch.object(database, "SessionFactory", factory),
-            patch.object(library_database, "SessionFactory", factory),
+            patch.object(connection, "engine", self.engine),
+            patch.object(connection, "SessionFactory", factory),
         ]
         for item in self.patches:
             item.start()
@@ -48,7 +46,7 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
 
     async def create_delivery(self, repeat="daily"):
         reminder_id = await database.save_reminder("guild", "channel", "owner", "Drink water", 100, repeat)
-        async with database.SessionFactory() as session:
+        async with connection.SessionFactory() as session:
             reminder = await session.get(database.Reminder, reminder_id)
         delivery_id = await database.save_reminder_delivery(reminder)
         await database.set_reminder_delivery_message(delivery_id, "123")
@@ -87,18 +85,18 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
         await database.create_tables()
         self.assertIsNotNone(await library_database.get_user_library_item(item_id, None, "owner"))
         self.assertIsNone(await library_database.get_user_library_item(item_id, "guild", "owner"))
-        async with database.SessionFactory() as session:
+        async with connection.SessionFactory() as session:
             self.assertIsNotNone(await session.get(database.Reminder, reminder_id))
 
     async def test_duplicate_snooze_clicks_create_only_one_copy(self):
         reminder_id, delivery_id = await self.create_delivery()
-        with patch("database.time.time", return_value=1000):
+        with patch("database.reminder_database.time.time", return_value=1000):
             results = await asyncio.gather(
                 database.resolve_reminder_delivery(delivery_id, "owner", 600),
                 database.resolve_reminder_delivery(delivery_id, "owner", 600),
             )
         self.assertEqual(sorted(results), [False, True])
-        async with database.SessionFactory() as session:
+        async with connection.SessionFactory() as session:
             reminders = list(await session.scalars(select(database.Reminder).order_by(database.Reminder.id)))
         self.assertEqual(len(reminders), 2)
         self.assertEqual(reminders[0].id, reminder_id)
@@ -144,7 +142,7 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(deliveries), 1)
         self.assertEqual(deliveries[0].message_id, "789")
         self.assertTrue(channel.send.call_args.kwargs["view"].is_persistent())
-        async with database.SessionFactory() as session:
+        async with connection.SessionFactory() as session:
             self.assertTrue((await session.get(database.Reminder, reminder_id)).sent)
         await bot.close()
 
@@ -155,7 +153,7 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
         channel = SimpleNamespace(send=AsyncMock(side_effect=error))
         with patch.object(bot, "get_partial_messageable", return_value=channel), patch("main.print"):
             await bot.check_reminders.coro(bot)
-        async with database.SessionFactory() as session:
+        async with connection.SessionFactory() as session:
             self.assertFalse((await session.get(database.Reminder, reminder_id)).sent)
             self.assertEqual(list(await session.scalars(select(database.ReminderDelivery))), [])
         await bot.close()

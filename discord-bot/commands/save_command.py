@@ -1,7 +1,7 @@
 import discord
 
 from configurations.helpers.library_helper import read_library_file
-from library_database import save_library_item
+from database import save_library_item
 
 def register_save(bot):
     @bot.commands.command(
