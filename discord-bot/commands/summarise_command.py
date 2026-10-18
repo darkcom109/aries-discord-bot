@@ -2,6 +2,7 @@ import discord
 
 from database import load_messages
 from clients.summarise_client import summarise_response
+from configurations.helpers.response_helper import send_answer
 
 def register_summarise(bot):
     @bot.commands.command(
@@ -44,4 +45,4 @@ def register_summarise(bot):
             if not summary:
                 summary = "I couldn't produce a summary"
 
-        await interaction.edit_original_response(content=summary[:2000])
+        await send_answer(interaction, summary)

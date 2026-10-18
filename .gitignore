@@ -4,6 +4,12 @@
 ### dotenv ###
 .env
 
+# Runtime SQLite data (already tracked files must be untracked separately)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

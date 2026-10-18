@@ -1,5 +1,10 @@
+import logging
+
+import discord
+
 from database import load_messages, save_message
 from clients.ollama_client import ollama_response
+from configurations.helpers.response_helper import answer_parts
 from commands import (
     register_ask,
     register_cancel_reminder,
@@ -7,13 +12,33 @@ from commands import (
     register_hello,
     register_reminders,
     register_summarise,
-    register_notes
+    register_notes,
+    register_save,
+    register_library,
+    register_context,
 )
 
 def register_commands(bot):
     @bot.event
     async def on_ready():
         print(f"Connected as {bot.user}")
+
+    @bot.commands.error
+    async def on_command_error(interaction: discord.Interaction, error):
+        logging.getLogger(__name__).error(
+            "Discord command failed", exc_info=(type(error), error, error.__traceback__)
+        )
+        try:
+            if interaction.response.is_done():
+                await interaction.edit_original_response(
+                    content="I couldn't complete that request. Please try again."
+                )
+            else:
+                await interaction.response.send_message(
+                    "I couldn't complete that request. Please try again.", ephemeral=True
+                )
+        except discord.HTTPException:
+            pass
 
     @bot.event
     async def on_message(message):
@@ -25,8 +50,8 @@ def register_commands(bot):
 
         prompt = (
             message.content
-            .replace(f"<@{bot.user.id}", "")
-            .replace(f"<@!{bot.user.id}", "")
+            .replace(f"<@{bot.user.id}>", "")
+            .replace(f"<@!{bot.user.id}>", "")
             .strip()
         )
 
@@ -72,10 +97,13 @@ def register_commands(bot):
         await save_message(guild_id, channel_id, user_id, "user", prompt)
         await save_message(guild_id, channel_id, user_id, "assistant", answer)
 
-        if len(answer) > 2000:
-            answer = answer[:1997] + "..."
-
-        await message.reply(answer, mention_author=False)
+        preview, files = answer_parts(answer)
+        await message.reply(
+            preview,
+            files=files,
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     register_ask(bot)
     register_forget(bot)
@@ -84,3 +112,6 @@ def register_commands(bot):
     register_cancel_reminder(bot)
     register_summarise(bot)
     register_notes(bot)
+    register_save(bot)
+    register_library(bot)
+    register_context(bot)

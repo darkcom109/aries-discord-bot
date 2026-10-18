@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 
 from io import BytesIO
@@ -18,7 +20,7 @@ def register_notes(bot):
             return
 
         file_bytes = await file.read()
-        text = extract_text(file.filename, file_bytes)
+        text = await asyncio.to_thread(extract_text, file.filename, file_bytes)
 
         if not text.strip():
             await interaction.followup.send(

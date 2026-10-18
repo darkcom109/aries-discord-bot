@@ -1,6 +1,17 @@
 # Aries Discord Bot
 
-Aries is a self-hosted Discord chatbot powered by Ollama's Gemma 4 31B cloud model through Ollama's API. It keeps conversation memory in SQLite and can create polls, reminders, search the web, analyse images, and generate study notes from PDF or PowerPoint files.
+Aries is a self-hosted Discord chatbot powered by Ollama's Gemma 4 31B cloud model through Ollama's API. It keeps conversation memory in SQLite and can create polls, reminders, search the web, analyse images, generate study notes, and keep a private searchable library.
+
+## Interactive features
+
+- **Save and find things:** use `/save` with text or a PDF, PPTX, TXT, Markdown, CSV, or JSON attachment (up to 8 MB). `/library query:docker` searches your saved titles and content. The browser lets you ask questions, download the saved text, open its original message, or remove the saved copy.
+- **Right-click messages:** under **Apps**, choose **Save to Aries** or **Ask Aries about this**. Questions can use the message's text, readable attachments, and first image; answers are visible only to you.
+- **Snooze reminders:** delivered reminders offer preset snooze times, a custom form (1 minute to 7 days), and Dismiss. New reminder controls survive bot restarts. Snoozing adds a one-time reminder and leaves daily/weekly schedules intact.
+- **Keep full answers:** long replies include a Markdown attachment instead of silently losing the rest of the answer.
+
+Libraries are private to each user within a server; DMs have a separate library. Search uses keywords and shows up to 50 matches. Saved documents keep up to 100,000 characters of extracted text. Questions about long sources use selected excerpts, so they do not guarantee coverage of the entire document. Browsing and saving need no AI request; asking about a source sends excerpts and any selected image to Ollama's cloud API. `/forget` clears conversation history, not your saved library.
+
+Restart Aries after updating so it creates the additional SQLite tables and syncs the commands. Existing reminder notifications from before this update do not gain persistent controls. Library browser controls last 10 minutes; reopen `/library` when needed.
 
 ## What you need
 
@@ -40,7 +51,7 @@ python main.py
 
 This runs Aries in the foreground for testing. Conversation context and attached images are sent to Ollama's cloud API for inference. Set up `systemd` auto-start after confirming the bot works on the mini PC.
 
-Invite the bot using the `bot` and `applications.commands` scopes, with permissions to view and send messages, create polls, and attach files.
+Invite the bot using the `bot` and `applications.commands` scopes, with permissions to view and send messages, embed links, create polls, and attach files.
 
 ## Optional web search
 
@@ -48,4 +59,8 @@ Web search requires SearXNG to be running locally on port `8088`. Its configurat
 
 ## Data
 
-Conversation memory and reminders are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes yet.
+Conversation memory, reminders, and saved library entries are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes or saved document text yet.
+
+The database is currently tracked by Git. Before saving private content, use `git rm --cached discord-bot/aries.db` to stop tracking it while keeping your local data. The ignore rules then keep it out of future commits; they do not remove older committed copies.
+
+Run the offline checks from the repository root with `python -m unittest discover -s tests -p 'test_*.py'`. They use isolated temporary databases and mocked AI requests.
