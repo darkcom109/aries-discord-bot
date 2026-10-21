@@ -5,6 +5,7 @@ from pathlib import Path
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
+from sqlalchemy.exc import SQLAlchemyError
 
 from database import (
     create_tables,
@@ -20,6 +21,9 @@ from configurations.helpers.reminder_helper import next_reminder_due_at
 from configurations.helpers.response_helper import shorten_text
 from commands import register_commands
 from views import ReminderView
+from clients.tfl_client import TflClient
+from clients.server_client import ServerMonitor
+from configurations.handlers.tfl_watch_handler import handle_tfl_watches
 
 bot_directory = Path(__file__).resolve().parent
 project_directory = bot_directory.parent
@@ -34,6 +38,9 @@ class MyBot(discord.Client):
         intents = discord.Intents.default()
         super().__init__(intents=intents)
         self.commands = discord.app_commands.CommandTree(self)
+        self.tfl = TflClient()
+        self.monitor = ServerMonitor()
+        self.check_tfl.add_exception_type(SQLAlchemyError)
 
     async def setup_hook(self):
         await create_tables()
@@ -41,10 +48,12 @@ class MyBot(discord.Client):
             if delivery.message_id is not None:
                 self.add_view(ReminderView(delivery.id), message_id=int(delivery.message_id))
         self.check_reminders.start()
+        self.check_tfl.start()
         await self.commands.sync()
 
     async def close(self):
         self.check_reminders.cancel()
+        self.check_tfl.cancel()
         await super().close()
 
     @tasks.loop(seconds=1)
@@ -78,6 +87,14 @@ class MyBot(discord.Client):
 
     @check_reminders.before_loop
     async def before_check_reminders(self):
+        await self.wait_until_ready()
+
+    @tasks.loop(seconds=60)
+    async def check_tfl(self):
+        await handle_tfl_watches(self)
+
+    @check_tfl.before_loop
+    async def before_check_tfl(self):
         await self.wait_until_ready()
 
 if __name__ == "__main__":

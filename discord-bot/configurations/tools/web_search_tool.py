@@ -2,7 +2,7 @@ web_search_tool = {
     "type": "function",
     "function": {
         "name": "web_search",
-        "description": "Search the live web. Always use this for questions about the latest, current, today, recent events, or live news; do not answer those from memory.",
+        "description": "Search the live web for latest/current information or news; do not answer those from memory. Use get_tfl instead for live London transport.",
         "parameters": {
             "type": "object",
             "properties": {

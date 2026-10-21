@@ -117,7 +117,7 @@ class StorageTests(unittest.IsolatedAsyncioTestCase):
     async def test_persistent_controls_restore_from_database(self):
         _, delivery_id = await self.create_delivery()
         bot = MyBot()
-        with patch.object(bot.check_reminders, "start"), patch.object(bot.commands, "sync", new=AsyncMock()):
+        with patch.object(bot.check_reminders, "start"), patch.object(bot.check_tfl, "start"), patch.object(bot.commands, "sync", new=AsyncMock()):
             await bot.setup_hook()
         views = bot.persistent_views
         self.assertEqual(len(views), 1)
