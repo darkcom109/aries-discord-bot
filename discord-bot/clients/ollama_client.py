@@ -3,7 +3,7 @@ import requests
 import base64
 
 from configurations.prompts.system_prompt import get_system_prompt
-from configurations.tools import poll_tool, reminder_tool, web_search_tool
+from configurations.tools import poll_tool, reminder_tool, web_search_tool, tfl_tool
 from configurations.ollama_config import OLLAMA_API_URL, OLLAMA_MODEL, get_ollama_headers
 
 async def ollama_response(history, prompt, image_data: bytes | None = None):
@@ -30,7 +30,7 @@ async def ollama_response(history, prompt, image_data: bytes | None = None):
 
     return await ollama_request(
         messages,
-        tools=[poll_tool, reminder_tool, web_search_tool],
+        tools=[poll_tool, reminder_tool, web_search_tool, tfl_tool],
     )
 
 async def ollama_request(messages, tools=None, max_tokens: int = 256):

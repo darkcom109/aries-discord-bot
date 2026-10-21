@@ -8,6 +8,7 @@ Aries is a self-hosted Discord chatbot powered by Ollama's Gemma 4 31B cloud mod
 - **Right-click messages:** under **Apps**, choose **Save to Aries** or **Ask Aries about this**. Questions can use the message's text, readable attachments, and first image; answers are visible only to you.
 - **Snooze reminders:** delivered reminders offer preset snooze times, a custom form (1 minute to 7 days), and Dismiss. New reminder controls survive bot restarts. Snoozing adds a one-time reminder and leaves daily/weekly schedules intact.
 - **Keep full answers:** long replies include a Markdown attachment instead of silently losing the rest of the answer.
+- **London transport:** check TfL service status, find stop IDs, look up live arrivals, plan a journey, and opt into private line-change alerts.
 
 Libraries are private to each user within a server; DMs have a separate library. Search uses keywords and shows up to 50 matches. Saved documents keep up to 100,000 characters of extracted text. Questions about long sources use selected excerpts, so they do not guarantee coverage of the entire document. Browsing and saving need no AI request; asking about a source sends excerpts and any selected image to Ollama's cloud API. `/forget` clears conversation history, not your saved library.
 
@@ -57,9 +58,25 @@ Invite the bot using the `bot` and `applications.commands` scopes, with permissi
 
 Web search requires SearXNG to be running locally on port `8088`. Its configuration file is `searxng-config/settings.yml`; Aries sends searches to `http://localhost:8088/search`.
 
+## TfL transport
+
+Restart Aries to create the watch table and sync the new `/tfl` commands:
+
+- `/tfl status line:Victoria` checks one rail line; omit `line` for all supported lines. Tube, DLR, Elizabeth line, Overground and tram are included.
+- `/tfl stops query:Oxford Circus` finds stop IDs, modes and available directions. Copy an ID to avoid mixing up nearby stops.
+- `/tfl arrivals stop:940GZZLUOXC line:Victoria` shows up to eight predictions; the line/bus route filter is optional.
+- `/tfl journey origin:940GZZLUWLO destination:940GZZLUBNK` plans a journey departing now. Names, postcodes and coordinates also work; ambiguous locations produce choices rather than a guessed route.
+- `/tfl watch line:Victoria` enables DMs when that line's status changes. `/tfl watches` lists your alerts; `/tfl unwatch line:Victoria` removes one, even while TfL is unavailable.
+
+These slash-command replies are private and make no AI requests. You can also ask `/ask` or mention Aries with a transport question; the model can call the same TfL lookups. Those replies follow the normal chat visibility/history rules. Enabling alerts requires the explicit `/tfl watch` command, not an AI tool call.
+
+No TfL account is needed for anonymous access. Optionally add `TFL_APP_KEY=` to either `.env` file if you have a [TfL subscription key](https://api-portal.tfl.gov.uk/products). Aries shares a short-lived cache and caps outgoing requests at 40/minute per bot process, including with a key; 429 responses trigger a cooldown. There are no new Python dependencies. TfL requests go to `https://api.tfl.gov.uk` and include only your requested locations/filters and optional key, not Discord IDs or chat history.
+
+Line watches are saved in SQLite and checked every minute while Aries is running. They monitor the whole line, all day, including recovery and service closures; they aren't timetable-linked or route-specific. Up to eight lines can be watched per user. DMs must be enabled. Missed intermediate changes during downtime aren't replayed, and failed deliveries retry on a later check. Arrival times are predictions, not guarantees: rerun the command for a new snapshot and check [TfL](https://tfl.gov.uk/status-updates/) before travelling.
+
 ## Data
 
-Conversation memory, reminders, and saved library entries are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes or saved document text yet.
+Conversation memory, reminders, saved library entries, and TfL watches are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes or saved document text yet.
 
 The database is currently tracked by Git. Before saving private content, use `git rm --cached discord-bot/aries.db` to stop tracking it while keeping your local data. The ignore rules then keep it out of future commits; they do not remove older committed copies.
 

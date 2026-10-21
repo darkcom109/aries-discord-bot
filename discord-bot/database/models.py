@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, Integer, Boolean
+from sqlalchemy import String, Text, Integer, Boolean, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -49,3 +49,15 @@ class SavedItem(Base):
     content: Mapped[str] = mapped_column(Text)
     source_url: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[int] = mapped_column(Integer)
+
+
+class TflWatch(Base):
+    __tablename__ = "tfl_watches"
+    __table_args__ = (UniqueConstraint("user_id", "line_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, index=True)
+    channel_id: Mapped[str] = mapped_column(String)
+    line_id: Mapped[str] = mapped_column(String(80))
+    line_name: Mapped[str] = mapped_column(String(100))
+    last_status: Mapped[str] = mapped_column(String(64))

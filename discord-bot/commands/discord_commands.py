@@ -5,6 +5,7 @@ import discord
 from database import load_messages, save_message
 from clients.ollama_client import ollama_response
 from configurations.helpers.response_helper import answer_parts
+from configurations.handlers.tfl_handler import tfl_answer
 from .ask_command import register_ask
 from .cancel_reminder_command import register_cancel_reminder
 from .forget_command import register_forget
@@ -15,6 +16,7 @@ from .notes_command import register_notes
 from .save_command import register_save
 from .library_command import register_library
 from .context_command import register_context
+from .tfl_command import register_tfl
 
 def register_commands(bot):
     @bot.event
@@ -84,13 +86,16 @@ def register_commands(bot):
             image_data = await image.read() if image is not None else None
             history = await load_messages(guild_id, channel_id)
             result = await ollama_response(history, prompt, image_data)
-
-        reply = result["message"]
-
-        if reply.get("tool_calls"):
-            answer = "Use /ask for polls and reminders"
-        else:
-            answer = reply.get("content") or "I couldn't generate a reply"
+            reply = result["message"]
+            tool_calls = reply.get("tool_calls") or []
+            if tool_calls:
+                function = tool_calls[0].get("function", {})
+                if function.get("name") == "get_tfl":
+                    answer = await tfl_answer(bot.tfl, function.get("arguments", {}))
+                else:
+                    answer = "Use /ask for that action."
+            else:
+                answer = reply.get("content") or "I couldn't generate a reply"
 
         await save_message(guild_id, channel_id, user_id, "user", prompt)
         await save_message(guild_id, channel_id, user_id, "assistant", answer)
@@ -113,3 +118,4 @@ def register_commands(bot):
     register_save(bot)
     register_library(bot)
     register_context(bot)
+    register_tfl(bot)
