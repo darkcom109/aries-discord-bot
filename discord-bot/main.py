@@ -22,6 +22,7 @@ from configurations.helpers.response_helper import shorten_text
 from commands import register_commands
 from views import ReminderView
 from clients.tfl_client import TflClient
+from clients.server_client import ServerMonitor
 from configurations.handlers.tfl_watch_handler import handle_tfl_watches
 
 bot_directory = Path(__file__).resolve().parent
@@ -38,6 +39,7 @@ class MyBot(discord.Client):
         super().__init__(intents=intents)
         self.commands = discord.app_commands.CommandTree(self)
         self.tfl = TflClient()
+        self.monitor = ServerMonitor()
         self.check_tfl.add_exception_type(SQLAlchemyError)
 
     async def setup_hook(self):

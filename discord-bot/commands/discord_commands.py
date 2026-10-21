@@ -17,6 +17,8 @@ from .save_command import register_save
 from .library_command import register_library
 from .context_command import register_context
 from .tfl_command import register_tfl
+from .server_command import register_server
+from .logs_command import register_logs
 
 def register_commands(bot):
     @bot.event
@@ -119,3 +121,5 @@ def register_commands(bot):
     register_library(bot)
     register_context(bot)
     register_tfl(bot)
+    register_server(bot)
+    register_logs(bot)

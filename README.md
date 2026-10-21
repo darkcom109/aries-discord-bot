@@ -9,6 +9,7 @@ Aries is a self-hosted Discord chatbot powered by Ollama's Gemma 4 31B cloud mod
 - **Snooze reminders:** delivered reminders offer preset snooze times, a custom form (1 minute to 7 days), and Dismiss. New reminder controls survive bot restarts. Snoozing adds a one-time reminder and leaves daily/weekly schedules intact.
 - **Keep full answers:** long replies include a Markdown attachment instead of silently losing the rest of the answer.
 - **London transport:** check TfL service status, find stop IDs, look up live arrivals, plan a journey, and opt into private line-change alerts.
+- **Owner-only monitoring:** `/server` shows the host's metrics and service status; `/logs` previews or downloads a redacted log sample from Aries or SearXNG. Replies are private.
 
 Libraries are private to each user within a server; DMs have a separate library. Search uses keywords and shows up to 50 matches. Saved documents keep up to 100,000 characters of extracted text. Questions about long sources use selected excerpts, so they do not guarantee coverage of the entire document. Browsing and saving need no AI request; asking about a source sends excerpts and any selected image to Ollama's cloud API. `/forget` clears conversation history, not your saved library.
 
@@ -73,6 +74,27 @@ These slash-command replies are private and make no AI requests. You can also as
 No TfL account is needed for anonymous access. Optionally add `TFL_APP_KEY=` to either `.env` file if you have a [TfL subscription key](https://api-portal.tfl.gov.uk/products). Aries shares a short-lived cache and caps outgoing requests at 40/minute per bot process, including with a key; 429 responses trigger a cooldown. There are no new Python dependencies. TfL requests go to `https://api.tfl.gov.uk` and include only your requested locations/filters and optional key, not Discord IDs or chat history.
 
 Line watches are saved in SQLite and checked every minute while Aries is running. They monitor the whole line, all day, including recovery and service closures; they aren't timetable-linked or route-specific. Up to eight lines can be watched per user. DMs must be enabled. Missed intermediate changes during downtime aren't replayed, and failed deliveries retry on a later check. Arrival times are predictions, not guarantees: rerun the command for a new snapshot and check [TfL](https://tfl.gov.uk/status-updates/) before travelling.
+
+## Host monitoring
+
+Update the existing environment from the repository root with `.venv/bin/python -m pip install -r requirements.txt` (Windows: `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`). This adds `psutil`; `requirements.txt` is now UTF-8 instead of UTF-16.
+
+Set these in either bot `.env`, then restart Aries to load the settings and sync commands:
+
+```env
+ARIES_OWNER_ID=your_discord_user_id
+ARIES_SYSTEMD_UNIT=aries.service
+```
+
+Use **Copy User ID** in Discord's Developer Mode for the owner ID. Missing/invalid IDs disable monitoring; server administrators do not automatically get access. Change the unit only if your systemd service has another name. On the mini PC, restart your existing service with `sudo systemctl restart aries` after updating.
+
+- `/server`: CPU, RAM, free space on Aries' filesystem, host/process uptime, process RAM, available temperatures, and Aries/systemd + SearXNG/Compose status. **Refresh** uses a shared five-second cache. Docker's running state is not an application health guarantee.
+- `/logs service:aries minutes:30 errors_only:true`: journal entries from the configured systemd unit. `/logs service:searxng` reads only this repo's Compose service. Optional `lines` is 1–200 (default 100); `minutes` is 1–1440 (default 30).
+- Log controls provide **Refresh**, **Errors only/Show all**, and a private **Download logs** `.txt` attachment. Filtering/download use the captured sample, not the entire journal; Python traceback context is retained where possible. Keyword filtering is approximate, not proof that no errors occurred.
+
+Metrics describe the machine/environment running Aries, not a remote machine. Aries service logs require Linux/systemd; SearXNG status/logs require the Docker CLI, Compose plugin and existing daemon permissions. Missing tools/access produce an explanation. No `sudo`, shell commands, restarts or permission changes are executed by these controls. If journal reading is denied, review the service account's permissions; the [systemd-journal group grants broad journal-reading access](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html), so it is not granted automatically. Keep Aries unprivileged.
+
+Commands and every button are owner-checked; responses/downloads are ephemeral, controls expire after five minutes, and these reads make no AI requests or conversation/database writes. Log reads have an eight-second timeout, bounded subprocess capture, a 64 KiB message budget, and a two-second refresh cooldown. Loaded environment credentials and common token/password patterns are redacted before preview/download; redaction is best-effort, so review logs before sharing them. Private results are still delivered through Discord. No background health alerts or external offline monitoring are enabled by this feature.
 
 ## Data
 
