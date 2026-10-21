@@ -1,6 +1,4 @@
-import asyncio
-import requests
-from configurations.ollama_config import OLLAMA_API_URL, OLLAMA_MODEL, get_ollama_headers
+from clients.ollama_client import ollama_request
 
 async def generate_notes(document_text: str, filename: str) -> str:
     messages = [
@@ -25,19 +23,5 @@ async def generate_notes(document_text: str, filename: str) -> str:
         }
     ]
 
-    response = await asyncio.to_thread(
-        requests.post,
-        OLLAMA_API_URL,
-        headers=get_ollama_headers(),
-        json={
-            "model": OLLAMA_MODEL,
-            "messages": messages,
-            "stream": False,
-            "think": False
-        },
-        timeout=240
-    )
-
-    response.raise_for_status()
-    data = response.json()
+    data = await ollama_request(messages, max_tokens=4096)
     return data.get("message", {}).get("content", "").strip()

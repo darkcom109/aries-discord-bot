@@ -19,6 +19,7 @@ from .context_command import register_context
 from .tfl_command import register_tfl
 from .server_command import register_server
 from .logs_command import register_logs
+from .autonomy_command import register_autonomy
 
 def register_commands(bot):
     @bot.event
@@ -123,3 +124,4 @@ def register_commands(bot):
     register_tfl(bot)
     register_server(bot)
     register_logs(bot)
+    register_autonomy(bot)

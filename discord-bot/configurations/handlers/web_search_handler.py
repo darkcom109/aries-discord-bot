@@ -1,6 +1,6 @@
 import asyncio
 import requests
-import trafilatura
+from clients.page_client import fetch_page_text
 from clients.web_search_client import web_search_response
 from database import save_message
 from configurations.helpers.response_helper import send_answer
@@ -18,35 +18,13 @@ async def web_search(query: str) -> list[dict[str, str]]:
 
     return [
         {
-            "title": result.get("title", ""),
-            "url": result.get("url", ""),
-            "content": result.get("content", "")[:500]
+            "title": str(result.get("title") or "")[:200],
+            "url": str(result.get("url") or "")[:2000],
+            "content": str(result.get("content") or "")[:500]
         }
         for result in data.get("results", [])[:5]
+        if isinstance(result, dict)
     ]
-
-def fetch_page_text(url):
-    try:
-        response = requests.get(
-            url,
-            headers={"User-Agent": "AriesDiscordBot/1.0"},
-            timeout=10
-        )
-        response.raise_for_status()
-    
-        if "html" not in response.headers.get("Content-Type", "").lower():
-            return ""
-    
-        text = trafilatura.extract(
-            response.text,
-            include_comments=False,
-            include_tables=False
-        )
-    
-        return (text or "")[:3000]
-    
-    except requests.RequestException:
-        return ""
 
 async def handle_web_search(
     interaction,

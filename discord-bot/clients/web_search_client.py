@@ -1,7 +1,5 @@
-import asyncio
 from datetime import date
-import requests
-from configurations.ollama_config import OLLAMA_API_URL, OLLAMA_MODEL, get_ollama_headers
+from clients.ollama_client import ollama_request
 
 async def web_search_response(prompt):
     today = date.today().strftime("%A, %d %B %Y")
@@ -19,18 +17,4 @@ async def web_search_response(prompt):
 
     messages.append({"role": "user", "content": prompt})
 
-    response = await asyncio.to_thread(
-        requests.post,
-        OLLAMA_API_URL,
-        headers=get_ollama_headers(),
-        json={
-            "model": OLLAMA_MODEL,
-            "messages": messages,
-            "stream": False,
-            "think": False,
-        },
-        timeout=240
-    )
-
-    response.raise_for_status()
-    return response.json()
+    return await ollama_request(messages, max_tokens=512)

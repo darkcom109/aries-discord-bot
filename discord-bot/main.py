@@ -23,6 +23,7 @@ from commands import register_commands
 from views import ReminderView
 from clients.tfl_client import TflClient
 from clients.server_client import ServerMonitor
+from clients.autonomy_client import AutonomyClient
 from configurations.handlers.tfl_watch_handler import handle_tfl_watches
 
 bot_directory = Path(__file__).resolve().parent
@@ -40,7 +41,9 @@ class MyBot(discord.Client):
         self.commands = discord.app_commands.CommandTree(self)
         self.tfl = TflClient()
         self.monitor = ServerMonitor()
+        self.autonomy = AutonomyClient(self)
         self.check_tfl.add_exception_type(SQLAlchemyError)
+        self.check_autonomy.add_exception_type(SQLAlchemyError)
 
     async def setup_hook(self):
         await create_tables()
@@ -49,11 +52,14 @@ class MyBot(discord.Client):
                 self.add_view(ReminderView(delivery.id), message_id=int(delivery.message_id))
         self.check_reminders.start()
         self.check_tfl.start()
+        self.check_autonomy.start()
         await self.commands.sync()
 
     async def close(self):
         self.check_reminders.cancel()
         self.check_tfl.cancel()
+        self.check_autonomy.cancel()
+        await self.autonomy.cancel_cycle()
         await super().close()
 
     @tasks.loop(seconds=1)
@@ -68,7 +74,8 @@ class MyBot(discord.Client):
                 message = await channel.send(
                     shorten_text(f"<@{reminder.user_id}> Reminder: {reminder.content}"),
                     allowed_mentions=discord.AllowedMentions(
-                        users=[discord.Object(id=int(reminder.user_id))]
+                        users=[discord.Object(id=int(reminder.user_id))],
+                        everyone=False, roles=False, replied_user=False,
                     ),
                     view=ReminderView(delivery_id),
                 )
@@ -95,6 +102,14 @@ class MyBot(discord.Client):
 
     @check_tfl.before_loop
     async def before_check_tfl(self):
+        await self.wait_until_ready()
+
+    @tasks.loop(seconds=60)
+    async def check_autonomy(self):
+        await self.autonomy.tick()
+
+    @check_autonomy.before_loop
+    async def before_check_autonomy(self):
         await self.wait_until_ready()
 
 if __name__ == "__main__":

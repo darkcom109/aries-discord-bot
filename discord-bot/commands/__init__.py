@@ -11,4 +11,5 @@ from .context_command import register_context
 from .tfl_command import register_tfl
 from .server_command import register_server
 from .logs_command import register_logs
+from .autonomy_command import register_autonomy
 from .discord_commands import register_commands

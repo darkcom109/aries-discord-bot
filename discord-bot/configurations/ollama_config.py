@@ -10,3 +10,14 @@ def get_ollama_headers() -> dict[str, str]:
         raise RuntimeError("OLLAMA_API_KEY is missing from the environment")
 
     return {"Authorization": f"Bearer {api_key}"}
+
+
+def local_ollama_settings():
+    return (
+        os.getenv("OLLAMA_LOCAL_API_URL", "http://127.0.0.1:11434/api/chat"),
+        os.getenv("OLLAMA_LOCAL_MODEL", "qwen3.5:2b"),
+    )
+
+
+def ollama_fallback_enabled() -> bool:
+    return os.getenv("OLLAMA_FALLBACK_ENABLED", "true").strip().lower() in {"1", "true", "yes"}

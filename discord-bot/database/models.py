@@ -61,3 +61,33 @@ class TflWatch(Base):
     line_id: Mapped[str] = mapped_column(String(80))
     line_name: Mapped[str] = mapped_column(String(100))
     last_status: Mapped[str] = mapped_column(String(64))
+
+
+class AutonomyState(Base):
+    __tablename__ = "autonomy_state"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    allow_actions: Mapped[bool] = mapped_column(Boolean, default=False)
+    owner_id: Mapped[str] = mapped_column(String)
+    guild_id: Mapped[str] = mapped_column(String)
+    channel_id: Mapped[str] = mapped_column(String)
+    goal: Mapped[str] = mapped_column(Text)
+    memory: Mapped[str] = mapped_column(Text, default="")
+    interval_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    next_run_at: Mapped[int] = mapped_column(Integer, default=0)
+    last_run_at: Mapped[int] = mapped_column(Integer, default=0)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class AutonomyAction(Base):
+    __tablename__ = "autonomy_actions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[int] = mapped_column(Integer, index=True)
+    owner_id: Mapped[str] = mapped_column(String, index=True)
+    channel_id: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String(50))
+    detail: Mapped[str] = mapped_column(Text)
+    signature: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")

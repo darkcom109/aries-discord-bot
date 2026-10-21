@@ -40,7 +40,7 @@ OLLAMA_API_KEY=your_ollama_api_key
 SEARXNG_SECRET=replace_with_a_random_secret
 ```
 
-Keep `.env` private; it is ignored by Git. Aries calls `https://ollama.com/api/chat` directly using the `gemma4:31b` cloud model, so Ollama does not need to be installed or running on the bot host. Cloud usage is subject to your Ollama account's credits and limits.
+Keep `.env` private; it is ignored by Git. Aries normally calls `https://ollama.com/api/chat` directly using the `gemma4:31b` cloud model. Cloud usage is subject to your Ollama account's credits and limits. Local Ollama is optional for cloud-only use, but required for the automatic backup below.
 
 You can keep `DISCORD_TOKEN` and `OLLAMA_API_KEY` in `discord-bot/.env` instead. The root `.env` must still contain `SEARXNG_SECRET` for Docker Compose.
 
@@ -54,6 +54,46 @@ python main.py
 This runs Aries in the foreground for testing. Conversation context and attached images are sent to Ollama's cloud API for inference. Set up `systemd` auto-start after confirming the bot works on the mini PC.
 
 Invite the bot using the `bot` and `applications.commands` scopes, with permissions to view and send messages, embed links, create polls, and attach files.
+
+## Local model backup
+
+On the **machine running Aries**, install/start Ollama and download the backup once:
+
+```bash
+ollama pull qwen3.5:2b
+```
+
+The default settings (also in `.env.example`) are:
+
+```env
+OLLAMA_FALLBACK_ENABLED=true
+OLLAMA_LOCAL_API_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_LOCAL_MODEL=qwen3.5:2b
+```
+
+All AI features share this route: chat, images, web answers, summaries, notes, saved-source questions and autonomous work. Cloud quota/rate-limit responses, temporary server failures and network outages select local inference; the cloud API key is **never** forwarded to the backup. Tools, messages, images, output caps and `think: false` are preserved. The smaller backup may be less capable and slower than cloud.
+
+Aries waits before retrying cloud (normally 15 minutes for HTTP errors, respecting a numeric `Retry-After` of 1 minute–24 hours; 1 minute after a connection/timeout failure). Missing/invalid API keys, missing cloud models and malformed requests are not silently hidden by fallback. If the backup is unavailable too, the request fails instead of inventing an answer. Set `OLLAMA_FALLBACK_ENABLED=false` for cloud-only operation. This does not install models or start the local Ollama service automatically; on Linux, ensure your existing `ollama` service starts at boot. Logs include `[cloud]` or `[local]` for each successful AI response.
+
+## Autonomous mode
+
+This is an opt-in background agent, **not consciousness**. Set `ARIES_OWNER_ID` to your own Discord user ID, restart Aries to create its new tables/sync commands, and use a dedicated channel:
+
+```text
+/autonomy start goal:Research useful self-hosted tools. Post only genuinely new, worthwhile discoveries with sources. channel:#aries-lab interval_minutes:15
+/autonomy status
+/autonomy activity
+/autonomy stop
+```
+
+Only the configured owner can control it. Starting enables public-page reading, SearXNG searches, TfL lookups and autonomous posts **in that one channel**. Use a private channel if the goal/results are personal. Add `allow_actions:true` when starting to also authorize 24-hour polls and one-time reminders for you in that channel; recurring reminders are not available to the agent. The model cannot choose other recipients, enable watches, access your private library/server logs, run shell commands, access accounts or make arbitrary HTTP writes.
+
+- First check is within a minute. Each cycle has at most 3 model requests, 4 tool calls and a 4-minute deadline. Default minimum interval is 15 minutes (configurable 5–1440); Aries can choose to wait longer, up to a day. It is a periodic worker, not a continuously thinking model, and plain model replies are quiet unless it explicitly calls `send_message`.
+- At most one post/poll/reminder creation per cycle and three total per rolling hour. Identical actions are suppressed for 24 hours; failed/uncertain attempts still consume the budget to avoid automatic duplicate sends. Posts cannot ping users/roles/everyone. Saved reminders use normal reminder delivery and will mention you when due.
+- Goals, short progress notes, due times and activity persist in SQLite across restarts. Activity is retained for 30 days and shown privately via `/autonomy activity`. Search/page evidence is treated as untrusted; public-page requests block private/reserved IPs, recheck redirects, verify TLS, and cap downloads. These safeguards reduce risk but do not eliminate prompt injection: start with a narrow goal and review activity.
+- `/autonomy stop` disables future cycles and cancels the current one. It cannot undo messages already accepted by Discord or delete previously created reminders; manage those with `/reminders` and `/cancel_reminder`. An in-flight local inference thread may finish after stopping, but its result is not used to resume the cancelled cycle. Normal chat/reminders remain available.
+
+Mode stays off until explicitly started, and is automatically disabled if the configured owner changes/disappears. It runs only while the bot/service is online, uses cloud allowance while enabled, and does not replay missed cycles after downtime. No live autonomous actions are performed by the test suite.
 
 ## Optional web search
 
@@ -98,9 +138,9 @@ Commands and every button are owner-checked; responses/downloads are ephemeral, 
 
 ## Data
 
-Conversation memory, reminders, saved library entries, and TfL watches are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes or saved document text yet.
+Conversation memory, reminders, saved library entries, TfL watches, autonomous settings/progress and recent activity are stored in `discord-bot/aries.db`. Back it up before moving Aries to another machine if you want to keep that data. Scanned PDFs without extractable text are not supported for notes or saved document text yet.
 
-The database is currently tracked by Git. Before saving private content, use `git rm --cached discord-bot/aries.db` to stop tracking it while keeping your local data. The ignore rules then keep it out of future commits; they do not remove older committed copies.
+Runtime databases are ignored by Git; keep database backups private too. Ignore rules do not remove older committed copies from repository history.
 
 ## Project layout
 

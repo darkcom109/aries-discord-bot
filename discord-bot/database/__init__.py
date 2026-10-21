@@ -1,4 +1,5 @@
 from .models import Base, Message, Reminder, ReminderDelivery, SavedItem, TflWatch
+from .models import AutonomyState, AutonomyAction
 from .connection import engine, SessionFactory, create_tables
 from .message_database import save_message, load_messages, delete_messages
 from .reminder_database import (
@@ -27,4 +28,9 @@ from .tfl_database import (
     load_tfl_watches,
     update_tfl_watch_status,
     delete_user_tfl_watch,
+)
+from .autonomy_database import (
+    get_autonomy_state, configure_autonomy, disable_autonomy, claim_autonomy_run,
+    autonomy_is_current, finish_autonomy_run, get_autonomy_actions,
+    reserve_autonomy_action, complete_autonomy_action,
 )
